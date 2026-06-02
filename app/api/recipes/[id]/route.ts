@@ -1,0 +1,105 @@
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { recipes } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
+  try {
+    const recipe = await db.query.recipes.findFirst({
+      where: eq(recipes.id, params.id),
+    });
+
+    if (!recipe) {
+      return new NextResponse("Not Found", { status: 404 });
+    }
+
+    return NextResponse.json(recipe);
+  } catch (error) {
+    console.error("Failed to fetch recipe:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
+  }
+}
+
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+    const { title, description, photo_url, tags, servings, ingredients, directions, notes, source_url } = body;
+
+    if (!title || !servings || !ingredients || !directions) {
+      return new NextResponse("Missing required fields", { status: 400 });
+    }
+
+    const [updatedRecipe] = await db
+      .update(recipes)
+      .set({
+        title,
+        description,
+        photo_url,
+        tags: tags || [],
+        servings: Number(servings),
+        ingredients,
+        directions,
+        notes,
+        source_url,
+        updated_at: new Date(),
+      })
+      .where(eq(recipes.id, params.id))
+      .returning();
+
+    if (!updatedRecipe) {
+      return new NextResponse("Not Found", { status: 404 });
+    }
+
+    return NextResponse.json(updatedRecipe);
+  } catch (error) {
+    console.error("Failed to update recipe:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
+  try {
+    const [deletedRecipe] = await db
+      .delete(recipes)
+      .where(eq(recipes.id, params.id))
+      .returning();
+
+    if (!deletedRecipe) {
+      return new NextResponse("Not Found", { status: 404 });
+    }
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error("Failed to delete recipe:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
+  }
+}
