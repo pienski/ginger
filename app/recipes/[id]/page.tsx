@@ -8,14 +8,16 @@ import DirectionSteps from "@/components/recipes/DirectionSteps";
 import DeleteButton from "@/components/recipes/DeleteButton";
 
 interface RecipeDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function RecipeDetailPage({ params }: RecipeDetailPageProps) {
+  const { id } = await params;
+  
   const recipe = await db.query.recipes.findFirst({
-    where: eq(recipes.id, params.id),
+    where: eq(recipes.id, id),
   });
 
   if (!recipe) {

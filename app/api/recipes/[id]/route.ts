@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
 
@@ -16,8 +16,9 @@ export async function GET(
   }
 
   try {
+    const { id } = await params;
     const recipe = await db.query.recipes.findFirst({
-      where: eq(recipes.id, params.id),
+      where: eq(recipes.id, id),
     });
 
     if (!recipe) {
@@ -33,7 +34,7 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
 
@@ -42,6 +43,7 @@ export async function PUT(
   }
 
   try {
+    const { id } = await params;
     const body = await request.json();
     const { title, description, photo_url, tags, servings, ingredients, directions, notes, source_url } = body;
 
@@ -63,7 +65,7 @@ export async function PUT(
         source_url,
         updated_at: new Date(),
       })
-      .where(eq(recipes.id, params.id))
+      .where(eq(recipes.id, id))
       .returning();
 
     if (!updatedRecipe) {
@@ -79,7 +81,7 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
 
@@ -88,9 +90,10 @@ export async function DELETE(
   }
 
   try {
+    const { id } = await params;
     const [deletedRecipe] = await db
       .delete(recipes)
-      .where(eq(recipes.id, params.id))
+      .where(eq(recipes.id, id))
       .returning();
 
     if (!deletedRecipe) {

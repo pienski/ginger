@@ -5,14 +5,16 @@ import { eq } from "drizzle-orm";
 import RecipeForm from "@/components/recipes/RecipeForm";
 
 interface EditRecipePageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function EditRecipePage({ params }: EditRecipePageProps) {
+  const { id } = await params;
+
   const recipe = await db.query.recipes.findFirst({
-    where: eq(recipes.id, params.id),
+    where: eq(recipes.id, id),
   });
 
   if (!recipe) {
