@@ -1,12 +1,279 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Ingredient, Recipe } from "@/lib/db/schema";
+import { createId } from "@paralleldrive/cuid2";
+import {
+  DndContext,
+  closestCorners,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverEvent,
+  DragStartEvent,
+  DragOverlay,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical } from "lucide-react";
+
+type FormIngredient = Ingredient & { id: string };
+type FormGroup = { id: string; name: string; ingredients: FormIngredient[] };
 
 interface RecipeFormProps {
   initialData?: Partial<Recipe>;
   isEditing?: boolean;
+}
+
+// "Dumb" visual component for an ingredient row
+function IngredientRow({
+  ingredient,
+  onUpdate,
+  onRemove,
+  isOverlay = false,
+  dragHandleProps = {},
+  dragHandleListeners = {},
+}: {
+  ingredient: FormIngredient;
+  onUpdate?: (field: keyof Ingredient, value: string | number | null) => void;
+  onRemove?: () => void;
+  isOverlay?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dragHandleProps?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dragHandleListeners?: any;
+}) {
+  return (
+    <div
+      className={`flex gap-2 items-start bg-white ${isOverlay ? "shadow-xl border rounded-md p-2 z-50 cursor-grabbing" : ""}`}
+    >
+      <button
+        type="button"
+        className="mt-2 p-1 text-gray-400 cursor-grab active:cursor-grabbing hover:text-gray-600"
+        {...dragHandleProps}
+        {...dragHandleListeners}
+      >
+        <GripVertical size={20} />
+      </button>
+      <input
+        type="number"
+        step="any"
+        placeholder="Qty"
+        className="w-20 border rounded-md px-3 py-2"
+        value={ingredient.amount}
+        onChange={(e) => onUpdate?.("amount", e.target.value)}
+      />
+      <input
+        type="text"
+        placeholder="Unit"
+        className="w-24 border rounded-md px-3 py-2"
+        value={ingredient.unit || ""}
+        onChange={(e) => onUpdate?.("unit", e.target.value)}
+      />
+      <div className="flex gap-1 items-center">
+        <input
+          type="number"
+          placeholder="Metric"
+          className="w-24 border rounded-md px-3 py-2"
+          value={ingredient.metric_amount || ""}
+          onChange={(e) => onUpdate?.("metric_amount", e.target.value)}
+        />
+        <select
+          className="border rounded-md px-1 py-2 bg-white text-sm"
+          value={ingredient.metric_unit || "g"}
+          onChange={(e) => onUpdate?.("metric_unit", e.target.value)}
+        >
+          <option value="g">g</option>
+          <option value="ml">ml</option>
+        </select>
+      </div>
+      <input
+        type="text"
+        placeholder="Ingredient name"
+        className="flex-grow border rounded-md px-3 py-2"
+        value={ingredient.name}
+        onChange={(e) => onUpdate?.("name", e.target.value)}
+      />
+      <button
+        type="button"
+        onClick={onRemove}
+        className="text-red-500 p-2 hover:bg-red-50 rounded"
+      >
+        &times;
+      </button>
+    </div>
+  );
+}
+
+// Sortable wrapper for ingredient row
+function SortableIngredientRow({
+  ingredient,
+  onUpdate,
+  onRemove,
+}: {
+  ingredient: FormIngredient;
+  onUpdate: (field: keyof Ingredient, value: string | number | null) => void;
+  onRemove: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: ingredient.id });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    opacity: isDragging ? 0.3 : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <IngredientRow
+        ingredient={ingredient}
+        onUpdate={onUpdate}
+        onRemove={onRemove}
+        dragHandleProps={attributes}
+        dragHandleListeners={listeners}
+      />
+    </div>
+  );
+}
+
+// "Dumb" visual component for a group container
+function GroupContainer({
+  group,
+  onUpdateName,
+  onRemove,
+  onAddIngredient,
+  isOverlay = false,
+  dragHandleProps = {},
+  dragHandleListeners = {},
+  children,
+}: {
+  group: FormGroup;
+  onUpdateName?: (name: string) => void;
+  onRemove?: () => void;
+  onAddIngredient?: () => void;
+  isOverlay?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dragHandleProps?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dragHandleListeners?: any;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div
+      className={`border rounded-lg p-4 bg-gray-50 space-y-4 ${isOverlay ? "shadow-2xl border-blue-400 z-50 cursor-grabbing" : ""}`}
+    >
+      <div className="flex justify-between items-center gap-2">
+        <div className="flex items-center gap-2 flex-grow">
+          <button
+            type="button"
+            className="p-1 text-gray-400 cursor-grab active:cursor-grabbing hover:text-gray-600"
+            {...dragHandleProps}
+            {...dragHandleListeners}
+          >
+            <GripVertical size={20} />
+          </button>
+          <input
+            type="text"
+            placeholder="Group Name (e.g. Sauce)"
+            className="flex-grow font-semibold bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none px-1 py-1"
+            value={group.name}
+            onChange={(e) => onUpdateName?.(e.target.value)}
+          />
+        </div>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="text-red-500 text-sm hover:underline"
+        >
+          Remove Group
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        {!isOverlay && (
+          <div className="hidden md:flex gap-2 mb-1 text-xs font-medium text-gray-400 pl-8">
+            <div className="w-20">Qty</div>
+            <div className="w-24">Unit</div>
+            <div className="w-36">Amount (g/ml)</div>
+            <div className="flex-grow">Ingredient Name</div>
+            <div className="w-10"></div>
+          </div>
+        )}
+        {children}
+      </div>
+
+      {!isOverlay && (
+        <button
+          type="button"
+          onClick={onAddIngredient}
+          className="text-blue-600 text-sm font-medium hover:underline ml-8"
+        >
+          + Add Ingredient to {group.name || "Group"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// Sortable wrapper for group
+function SortableGroup({
+  group,
+  onUpdateName,
+  onRemove,
+  onAddIngredient,
+  children,
+}: {
+  group: FormGroup;
+  onUpdateName: (name: string) => void;
+  onRemove: () => void;
+  onAddIngredient: () => void;
+  children: React.ReactNode;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: group.id });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    opacity: isDragging ? 0.3 : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <GroupContainer
+        group={group}
+        onUpdateName={onUpdateName}
+        onRemove={onRemove}
+        onAddIngredient={onAddIngredient}
+        dragHandleProps={attributes}
+        dragHandleListeners={listeners}
+      >
+        {children}
+      </GroupContainer>
+    </div>
+  );
 }
 
 export default function RecipeForm({
@@ -29,21 +296,111 @@ export default function RecipeForm({
   const [useIngredientGroups, setUseIngredientGroups] = useState(
     initialData?.use_ingredient_groups || false,
   );
-  const [ingredients, setIngredients] = useState<Ingredient[]>(
-    initialData?.ingredients?.map((ing) => ({
-      ...ing,
-      metric_amount: ing.metric_amount ?? null,
-      metric_unit: ing.metric_unit ?? "g",
-      group: ing.group || "",
-    })) || [
-      { name: "", amount: 1, unit: "", metric_amount: null, metric_unit: "g", group: "" },
-    ],
+
+  // Initialize ingredients and groups
+  const initialIngredients: FormIngredient[] = useMemo(() => {
+    return (
+      initialData?.ingredients?.map((ing) => ({
+        ...ing,
+        id: createId(),
+        metric_amount: ing.metric_amount ?? null,
+        metric_unit: ing.metric_unit ?? "g",
+        group: ing.group || "",
+      })) || [
+        {
+          id: createId(),
+          name: "",
+          amount: 1,
+          unit: "",
+          metric_amount: null,
+          metric_unit: "g",
+          group: "",
+        },
+      ]
+    );
+  }, [initialData]);
+
+  // If using groups, structured state. Otherwise, flat.
+  const [ingredients, setIngredients] = useState<FormIngredient[]>(
+    !useIngredientGroups ? initialIngredients : [],
   );
+
+  const [groups, setGroups] = useState<FormGroup[]>(() => {
+    if (!useIngredientGroups) return [];
+    // Group them
+    const gMap: Record<string, FormIngredient[]> = {};
+    initialIngredients.forEach((ing) => {
+      const gName = ing.group || "Other";
+      if (!gMap[gName]) gMap[gName] = [];
+      gMap[gName].push(ing);
+    });
+    return Object.entries(gMap).map(([name, ings]) => ({
+      id: createId(),
+      name: name === "Other" ? "" : name,
+      ingredients: ings,
+    }));
+  });
+
+  // Drag state
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const activeGroup = useMemo(() => groups.find(g => g.id === activeId), [groups, activeId]);
+  const activeIngredient = useMemo(() => {
+    if (!activeId) return null;
+    if (!useIngredientGroups) return ingredients.find(i => i.id === activeId);
+    for (const g of groups) {
+      const found = g.ingredients.find(i => i.id === activeId);
+      if (found) return found;
+    }
+    return null;
+  }, [ingredients, groups, activeId, useIngredientGroups]);
+
   const [directions, setDirections] = useState<string[]>(
     initialData?.directions || [""],
   );
   const [notes, setNotes] = useState(initialData?.notes || "");
   const [sourceUrl, setSourceUrl] = useState(initialData?.source_url || "");
+
+  // Sensors for dnd-kit
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  // Toggle groups handler
+  const handleToggleGroups = (val: boolean) => {
+    if (val === useIngredientGroups) return;
+    setUseIngredientGroups(val);
+
+    if (val) {
+      // Flat -> Grouped
+      const gMap: Record<string, FormIngredient[]> = {};
+      ingredients.forEach((ing) => {
+        const gName = ing.group || "Other";
+        if (!gMap[gName]) gMap[gName] = [];
+        gMap[gName].push(ing);
+      });
+      const newGroups = Object.entries(gMap).map(([name, ings]) => ({
+        id: createId(),
+        name: name === "Other" ? "" : name,
+        ingredients: ings,
+      }));
+      setGroups(newGroups.length > 0 ? newGroups : [{ id: createId(), name: "", ingredients: [] }]);
+      setIngredients([]);
+    } else {
+      // Grouped -> Flat
+      const flattened = groups.flatMap((g) =>
+        g.ingredients.map((ing) => ({ ...ing, group: g.name })),
+      );
+      setIngredients(flattened.length > 0 ? flattened : initialIngredients);
+      setGroups([]);
+    }
+  };
 
   // Tag Handlers
   const addTag = () => {
@@ -56,28 +413,209 @@ export default function RecipeForm({
     setTags(tags.filter((t) => t !== tagToRemove));
   };
 
-  // Ingredient Handlers
+  // Ingredient Handlers (Flat mode)
   const addIngredient = () => {
     setIngredients([
       ...ingredients,
-      { name: "", amount: 1, unit: "", metric_amount: null, metric_unit: "g", group: "" },
+      {
+        id: createId(),
+        name: "",
+        amount: 1,
+        unit: "",
+        metric_amount: null,
+        metric_unit: "g",
+        group: "",
+      },
     ]);
   };
   const updateIngredient = (
-    index: number,
+    id: string,
     field: keyof Ingredient,
     value: string | number | null,
   ) => {
-    const newIngredients = [...ingredients];
-    const val =
-      (field === "amount" || field === "metric_amount") && value !== ""
-        ? Number(value)
-        : value;
-    newIngredients[index] = { ...newIngredients[index], [field]: val };
-    setIngredients(newIngredients);
+    setIngredients(
+      ingredients.map((ing) => {
+        if (ing.id !== id) return ing;
+        const val =
+          (field === "amount" || field === "metric_amount") && value !== ""
+            ? Number(value)
+            : value;
+        return { ...ing, [field]: val };
+      }),
+    );
   };
-  const removeIngredient = (index: number) => {
-    setIngredients(ingredients.filter((_, i) => i !== index));
+  const removeIngredient = (id: string) => {
+    setIngredients(ingredients.filter((ing) => ing.id !== id));
+  };
+
+  // Group Handlers
+  const addGroup = () => {
+    setGroups([...groups, { id: createId(), name: "", ingredients: [] }]);
+  };
+  const removeGroup = (groupId: string) => {
+    setGroups(groups.filter((g) => g.id !== groupId));
+  };
+  const updateGroupName = (groupId: string, name: string) => {
+    setGroups(
+      groups.map((g) => (g.id === groupId ? { ...g, name } : g)),
+    );
+  };
+  const addIngredientToGroup = (groupId: string) => {
+    setGroups(
+      groups.map((g) => {
+        if (g.id !== groupId) return g;
+        return {
+          ...g,
+          ingredients: [
+            ...g.ingredients,
+            {
+              id: createId(),
+              name: "",
+              amount: 1,
+              unit: "",
+              metric_amount: null,
+              metric_unit: "g",
+              group: g.name,
+            },
+          ],
+        };
+      }),
+    );
+  };
+  const updateGroupIngredient = (
+    groupId: string,
+    ingId: string,
+    field: keyof Ingredient,
+    value: string | number | null,
+  ) => {
+    setGroups(
+      groups.map((g) => {
+        if (g.id !== groupId) return g;
+        return {
+          ...g,
+          ingredients: g.ingredients.map((ing) => {
+            if (ing.id !== ingId) return ing;
+            const val =
+              (field === "amount" || field === "metric_amount") && value !== ""
+                ? Number(value)
+                : value;
+            return { ...ing, [field]: val };
+          }),
+        };
+      }),
+    );
+  };
+  const removeGroupIngredient = (groupId: string, ingId: string) => {
+    setGroups(
+      groups.map((g) => {
+        if (g.id !== groupId) return g;
+        return {
+          ...g,
+          ingredients: g.ingredients.filter((ing) => ing.id !== ingId),
+        };
+      }),
+    );
+  };
+
+  // DnD Handlers
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+    if (!over) return;
+
+    if (!useIngredientGroups) {
+      if (active.id !== over.id) {
+        setIngredients((items) => {
+          const oldIndex = items.findIndex((i) => i.id === active.id);
+          const newIndex = items.findIndex((i) => i.id === over.id);
+          return arrayMove(items, oldIndex, newIndex);
+        });
+      }
+    } else {
+      const activeId = active.id as string;
+      const overId = over.id as string;
+
+      // Final sorting commit
+      const activeGroupIndex = groups.findIndex((g) => g.id === activeId);
+      if (activeGroupIndex !== -1) {
+        const overGroupIndex = groups.findIndex((g) => g.id === overId);
+        if (overGroupIndex !== -1 && activeGroupIndex !== overGroupIndex) {
+          setGroups((gs) => arrayMove(gs, activeGroupIndex, overGroupIndex));
+        }
+        return;
+      }
+      // Ingredients reordering is handled by handleDragOver in real-time
+    }
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    if (!useIngredientGroups) return;
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    // Check if dragging group
+    if (groups.some(g => g.id === activeId)) {
+      // Real-time group sorting
+      const activeIndex = groups.findIndex(g => g.id === activeId);
+      const overIndex = groups.findIndex(g => g.id === overId);
+      if (overIndex !== -1 && activeIndex !== overIndex) {
+        setGroups(gs => arrayMove(gs, activeIndex, overIndex));
+      }
+      return;
+    }
+
+    // Dragging ingredient
+    const activeG = groups.find((g) => g.ingredients.some((i) => i.id === activeId));
+    const overG = groups.find((g) => g.id === overId || g.ingredients.some((i) => i.id === overId));
+
+    if (!activeG || !overG) return;
+
+    if (activeG.id === overG.id) {
+      // Intra-group reorder
+      const oldIndex = activeG.ingredients.findIndex((i) => i.id === activeId);
+      const newIndex = overG.ingredients.findIndex((i) => i.id === overId);
+      if (oldIndex !== newIndex && newIndex !== -1) {
+        setGroups(gs => gs.map(g => {
+          if (g.id === activeG.id) {
+            return { ...g, ingredients: arrayMove(g.ingredients, oldIndex, newIndex) };
+          }
+          return g;
+        }));
+      }
+    } else {
+      // Inter-group move
+      setGroups((gs) => {
+        const activeIng = activeG.ingredients.find((i) => i.id === activeId)!;
+        return gs.map((g) => {
+          if (g.id === activeG.id) {
+            return {
+              ...g,
+              ingredients: g.ingredients.filter((i) => i.id !== activeId),
+            };
+          }
+          if (g.id === overG.id) {
+            const overIndex = g.ingredients.findIndex((i) => i.id === overId);
+            const newIndex = overIndex >= 0 ? overIndex : g.ingredients.length;
+            return {
+              ...g,
+              ingredients: [
+                ...g.ingredients.slice(0, newIndex),
+                { ...activeIng, group: g.name },
+                ...g.ingredients.slice(newIndex),
+              ],
+            };
+          }
+          return g;
+        });
+      });
+    }
   };
 
   // Direction Handlers
@@ -98,10 +636,36 @@ export default function RecipeForm({
     setLoading(true);
     setError(null);
 
-    if (useIngredientGroups && ingredients.some((ing) => ing.name.trim() !== "" && !ing.group?.trim())) {
-      setError("When using groups, all ingredients must belong to a group.");
-      setLoading(false);
-      return;
+    let finalIngredients: Ingredient[] = [];
+    if (useIngredientGroups) {
+      if (groups.some((g) => g.ingredients.some((ing) => ing.name.trim() !== "" && !g.name.trim()))) {
+        setError("When using groups, all ingredients must belong to a group.");
+        setLoading(false);
+        return;
+      }
+      finalIngredients = groups.flatMap((g) =>
+        g.ingredients
+          .filter((i) => i.name.trim() !== "")
+          .map((ing) => ({
+            name: ing.name,
+            amount: ing.amount,
+            unit: ing.unit,
+            metric_amount: ing.metric_amount,
+            metric_unit: ing.metric_unit,
+            group: g.name,
+          })),
+      );
+    } else {
+      finalIngredients = ingredients
+        .filter((i) => i.name.trim() !== "")
+        .map((ing) => ({
+          name: ing.name,
+          amount: ing.amount,
+          unit: ing.unit,
+          metric_amount: ing.metric_amount,
+          metric_unit: ing.metric_unit,
+          group: "",
+        }));
     }
 
     const recipeData = {
@@ -110,7 +674,7 @@ export default function RecipeForm({
       photo_url: photoUrl,
       servings: Number(servings),
       tags,
-      ingredients: ingredients.filter((i) => i.name.trim() !== ""),
+      ingredients: finalIngredients,
       use_ingredient_groups: useIngredientGroups,
       directions: directions.filter((d) => d.trim() !== ""),
       notes,
@@ -251,107 +815,128 @@ export default function RecipeForm({
       </section>
 
       {/* Ingredients */}
-      <section className="space-y-4">
+      <section className="space-y-6">
         <div className="flex justify-between items-end border-b pb-2">
           <h2 className="text-xl font-semibold">Ingredients</h2>
           <label className="flex items-center gap-2 text-sm font-medium text-gray-600 cursor-pointer">
             <input
               type="checkbox"
               checked={useIngredientGroups}
-              onChange={(e) => setUseIngredientGroups(e.target.checked)}
+              onChange={(e) => handleToggleGroups(e.target.checked)}
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             Use Groups
           </label>
         </div>
-        <div className="hidden md:flex gap-2 mb-2 text-sm font-medium text-gray-500">
-          <div className="w-20">Qty</div>
-          <div className="w-24">Unit</div>
-          <div className="w-36">Amount (g/ml)</div>
-          <div className="flex-grow">Ingredient Name</div>
-          {useIngredientGroups && <div className="w-32">Group</div>}
-          <div className="w-10"></div>
-        </div>
-        <div className="space-y-3">
-          {ingredients.map((ing, index) => (
-            <div key={index} className="flex gap-2 items-start">
-              <input
-                type="number"
-                step="any"
-                placeholder="Qty"
-                className="w-20 border rounded-md px-3 py-2"
-                value={ing.amount}
-                onChange={(e) =>
-                  updateIngredient(index, "amount", e.target.value)
-                }
-              />
-              <input
-                type="text"
-                placeholder="Unit"
-                className="w-24 border rounded-md px-3 py-2"
-                value={ing.unit || ""}
-                onChange={(e) =>
-                  updateIngredient(index, "unit", e.target.value)
-                }
-              />
-              <div className="flex gap-1 items-center">
-                <input
-                  type="number"
-                  placeholder="Metric"
-                  className="w-24 border rounded-md px-3 py-2"
-                  value={ing.metric_amount || ""}
-                  onChange={(e) =>
-                    updateIngredient(index, "metric_amount", e.target.value)
-                  }
-                />
-                <select
-                  className="border rounded-md px-1 py-2 bg-white text-sm"
-                  value={ing.metric_unit || "g"}
-                  onChange={(e) =>
-                    updateIngredient(index, "metric_unit", e.target.value)
-                  }
-                >
-                  <option value="g">g</option>
-                  <option value="ml">ml</option>
-                </select>
-              </div>
-              <input
-                type="text"
-                placeholder="Ingredient name"
-                className="flex-grow border rounded-md px-3 py-2"
-                value={ing.name}
-                onChange={(e) =>
-                  updateIngredient(index, "name", e.target.value)
-                }
-              />
-              {useIngredientGroups && (
-                <input
-                  type="text"
-                  placeholder="Group (e.g. Sauce)"
-                  className="w-32 border rounded-md px-3 py-2"
-                  value={ing.group || ""}
-                  onChange={(e) =>
-                    updateIngredient(index, "group", e.target.value)
-                  }
-                />
-              )}
+
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+          onDragCancel={() => setActiveId(null)}
+        >
+          {useIngredientGroups ? (
+            <div className="space-y-6">
+              <SortableContext
+                items={groups.map((g) => g.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {groups.map((group) => (
+                  <SortableGroup
+                    key={group.id}
+                    group={group}
+                    onUpdateName={(name) => updateGroupName(group.id, name)}
+                    onRemove={() => removeGroup(group.id)}
+                    onAddIngredient={() => addIngredientToGroup(group.id)}
+                    onUpdateIngredient={(ingId, field, value) =>
+                      updateGroupIngredient(group.id, ingId, field, value)
+                    }
+                    onRemoveIngredient={(ingId) =>
+                      removeGroupIngredient(group.id, ingId)
+                    }
+                  >
+                    <SortableContext
+                      items={group.ingredients.map((i) => i.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {group.ingredients.map((ing) => (
+                        <SortableIngredientRow
+                          key={ing.id}
+                          ingredient={ing}
+                          onUpdate={(field, value) =>
+                            updateGroupIngredient(group.id, ing.id, field, value)
+                          }
+                          onRemove={() =>
+                            removeGroupIngredient(group.id, ing.id)
+                          }
+                        />
+                      ))}
+                    </SortableContext>
+                  </SortableGroup>
+                ))}
+              </SortableContext>
               <button
                 type="button"
-                onClick={() => removeIngredient(index)}
-                className="text-red-500 p-2 hover:bg-red-50 rounded"
+                onClick={addGroup}
+                className="w-full py-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 font-medium hover:border-blue-400 hover:text-blue-500 transition-colors"
               >
-                &times;
+                + Add Ingredient Group
               </button>
             </div>
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={addIngredient}
-          className="text-blue-600 font-medium hover:underline"
-        >
-          + Add Ingredient
-        </button>
+          ) : (
+            <div className="space-y-4">
+              <div className="hidden md:flex gap-2 mb-2 text-sm font-medium text-gray-500 pl-8">
+                <div className="w-20">Qty</div>
+                <div className="w-24">Unit</div>
+                <div className="w-36">Amount (g/ml)</div>
+                <div className="flex-grow">Ingredient Name</div>
+                <div className="w-10"></div>
+              </div>
+              <SortableContext
+                items={ingredients.map((i) => i.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3">
+                  {ingredients.map((ing) => (
+                    <SortableIngredientRow
+                      key={ing.id}
+                      ingredient={ing}
+                      onUpdate={(field, value) =>
+                        updateIngredient(ing.id, field, value)
+                      }
+                      onRemove={() => removeIngredient(ing.id)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+              <button
+                type="button"
+                onClick={addIngredient}
+                className="text-blue-600 font-medium hover:underline pl-8"
+              >
+                + Add Ingredient
+              </button>
+            </div>
+          )}
+
+          <DragOverlay adjustScale={false}>
+            {activeId ? (
+              activeGroup ? (
+                <GroupContainer group={activeGroup} isOverlay>
+                  <div className="space-y-3">
+                    {activeGroup.ingredients.map((ing) => (
+                      <IngredientRow key={ing.id} ingredient={ing} />
+                    ))}
+                  </div>
+                </GroupContainer>
+              ) : activeIngredient ? (
+                <IngredientRow ingredient={activeIngredient} isOverlay />
+              ) : null
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       </section>
 
       {/* Directions */}
