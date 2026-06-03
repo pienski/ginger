@@ -5,6 +5,8 @@ export type Ingredient = {
   name: string;
   amount: number;
   unit: string | null;
+  metric_amount?: number | null;
+  metric_unit?: 'g' | 'ml' | null;
 };
 
 export const recipes = pgTable("recipes", {

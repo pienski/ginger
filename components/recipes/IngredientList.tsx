@@ -2,27 +2,12 @@
 
 import { useState } from "react";
 import { Ingredient } from "@/lib/db/schema";
+import { formatAmount, formatMetricAmount } from "@/lib/utils";
 
 interface IngredientListProps {
   ingredients: Ingredient[];
   baseServings: number;
 }
-
-const formatAmount = (num: number) => {
-  if (num === 0) return "0";
-  
-  // Fractions for amounts < 1
-  if (num < 1) {
-    if (Math.abs(num - 0.25) < 0.01) return "¼";
-    if (Math.abs(num - 0.5) < 0.01) return "½";
-    if (Math.abs(num - 0.75) < 0.01) return "¾";
-    if (Math.abs(num - 0.33) < 0.02) return "⅓";
-    if (Math.abs(num - 0.66) < 0.02) return "⅔";
-  }
-
-  // Round to 2 significant figures
-  return Number(num.toPrecision(2)).toString();
-};
 
 export default function IngredientList({ ingredients, baseServings }: IngredientListProps) {
   const [selectedServings, setSelectedServings] = useState(baseServings);
@@ -65,6 +50,9 @@ export default function IngredientList({ ingredients, baseServings }: Ingredient
       <ul className="space-y-3">
         {ingredients.map((ing, index) => {
           const scaledAmount = (ing.amount * selectedServings) / baseServings;
+          const scaledMetricAmount = ing.metric_amount 
+            ? (ing.metric_amount * selectedServings) / baseServings 
+            : null;
           const isChecked = checkedItems.has(index);
 
           return (
@@ -88,7 +76,13 @@ export default function IngredientList({ ingredients, baseServings }: Ingredient
                 <span className="font-bold">
                   {formatAmount(scaledAmount)}
                   {ing.unit ? ` ${ing.unit}` : ""}
-                </span>{" "}
+                </span>
+                {scaledMetricAmount !== null && (
+                  <span className="text-gray-500 ml-1 text-sm font-medium">
+                    ({formatMetricAmount(scaledMetricAmount, ing.metric_unit)})
+                  </span>
+                )}
+                {" "}
                 {ing.name}
               </div>
             </li>

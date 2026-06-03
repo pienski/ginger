@@ -9,23 +9,34 @@ interface RecipeFormProps {
   isEditing?: boolean;
 }
 
-export default function RecipeForm({ initialData, isEditing = false }: RecipeFormProps) {
+export default function RecipeForm({
+  initialData,
+  isEditing = false,
+}: RecipeFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form State
   const [title, setTitle] = useState(initialData?.title || "");
-  const [description, setDescription] = useState(initialData?.description || "");
+  const [description, setDescription] = useState(
+    initialData?.description || "",
+  );
   const [photoUrl, setPhotoUrl] = useState(initialData?.photo_url || "");
   const [servings, setServings] = useState(initialData?.servings || 2);
   const [tags, setTags] = useState<string[]>(initialData?.tags || []);
   const [newTag, setNewTag] = useState("");
   const [ingredients, setIngredients] = useState<Ingredient[]>(
-    initialData?.ingredients || [{ name: "", amount: 1, unit: "" }]
+    initialData?.ingredients?.map((ing) => ({
+      ...ing,
+      metric_amount: ing.metric_amount ?? null,
+      metric_unit: ing.metric_unit ?? "g",
+    })) || [
+      { name: "", amount: 1, unit: "", metric_amount: null, metric_unit: "g" },
+    ],
   );
   const [directions, setDirections] = useState<string[]>(
-    initialData?.directions || [""]
+    initialData?.directions || [""],
   );
   const [notes, setNotes] = useState(initialData?.notes || "");
   const [sourceUrl, setSourceUrl] = useState(initialData?.source_url || "");
@@ -43,11 +54,22 @@ export default function RecipeForm({ initialData, isEditing = false }: RecipeFor
 
   // Ingredient Handlers
   const addIngredient = () => {
-    setIngredients([...ingredients, { name: "", amount: 1, unit: "" }]);
+    setIngredients([
+      ...ingredients,
+      { name: "", amount: 1, unit: "", metric_amount: null, metric_unit: "g" },
+    ]);
   };
-  const updateIngredient = (index: number, field: keyof Ingredient, value: string | number) => {
+  const updateIngredient = (
+    index: number,
+    field: keyof Ingredient,
+    value: string | number | null,
+  ) => {
     const newIngredients = [...ingredients];
-    newIngredients[index] = { ...newIngredients[index], [field]: value };
+    const val =
+      (field === "amount" || field === "metric_amount") && value !== ""
+        ? Number(value)
+        : value;
+    newIngredients[index] = { ...newIngredients[index], [field]: val };
     setIngredients(newIngredients);
   };
   const removeIngredient = (index: number) => {
@@ -78,14 +100,16 @@ export default function RecipeForm({ initialData, isEditing = false }: RecipeFor
       photo_url: photoUrl,
       servings: Number(servings),
       tags,
-      ingredients: ingredients.filter(i => i.name.trim() !== ""),
-      directions: directions.filter(d => d.trim() !== ""),
+      ingredients: ingredients.filter((i) => i.name.trim() !== ""),
+      directions: directions.filter((d) => d.trim() !== ""),
       notes,
       source_url: sourceUrl,
     };
 
     try {
-      const url = isEditing ? `/api/recipes/${initialData?.id}` : "/api/recipes";
+      const url = isEditing
+        ? `/api/recipes/${initialData?.id}`
+        : "/api/recipes";
       const method = isEditing ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -116,9 +140,13 @@ export default function RecipeForm({ initialData, isEditing = false }: RecipeFor
 
       {/* Basic Info */}
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold border-b pb-2">Basic Information</h2>
+        <h2 className="text-xl font-semibold border-b pb-2">
+          Basic Information
+        </h2>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Title*</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Title*
+          </label>
           <input
             type="text"
             required
@@ -128,7 +156,9 @@ export default function RecipeForm({ initialData, isEditing = false }: RecipeFor
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Description</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Description
+          </label>
           <textarea
             className="mt-1 w-full border rounded-md px-3 py-2"
             rows={2}
@@ -138,7 +168,9 @@ export default function RecipeForm({ initialData, isEditing = false }: RecipeFor
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Photo URL</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Photo URL
+            </label>
             <input
               type="url"
               className="mt-1 w-full border rounded-md px-3 py-2"
@@ -148,7 +180,9 @@ export default function RecipeForm({ initialData, isEditing = false }: RecipeFor
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Base Servings*</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Base Servings*
+            </label>
             <input
               type="number"
               required
@@ -171,7 +205,7 @@ export default function RecipeForm({ initialData, isEditing = false }: RecipeFor
             value={newTag}
             onChange={(e) => setNewTag(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === "Enter") {
                 e.preventDefault();
                 addTag();
               }
@@ -208,6 +242,13 @@ export default function RecipeForm({ initialData, isEditing = false }: RecipeFor
       {/* Ingredients */}
       <section className="space-y-4">
         <h2 className="text-xl font-semibold border-b pb-2">Ingredients</h2>
+        <div className="hidden md:flex gap-2 mb-2 text-sm font-medium text-gray-500">
+          <div className="w-20">Qty</div>
+          <div className="w-24">Unit</div>
+          <div className="w-36">Amount (g/ml)</div>
+          <div className="flex-grow">Ingredient Name</div>
+          <div className="w-10"></div>
+        </div>
         <div className="space-y-3">
           {ingredients.map((ing, index) => (
             <div key={index} className="flex gap-2 items-start">
@@ -217,21 +258,48 @@ export default function RecipeForm({ initialData, isEditing = false }: RecipeFor
                 placeholder="Qty"
                 className="w-20 border rounded-md px-3 py-2"
                 value={ing.amount}
-                onChange={(e) => updateIngredient(index, "amount", e.target.value)}
+                onChange={(e) =>
+                  updateIngredient(index, "amount", e.target.value)
+                }
               />
               <input
                 type="text"
-                placeholder="Unit (g, tbsp, etc.)"
-                className="w-32 border rounded-md px-3 py-2"
+                placeholder="Unit"
+                className="w-24 border rounded-md px-3 py-2"
                 value={ing.unit || ""}
-                onChange={(e) => updateIngredient(index, "unit", e.target.value)}
+                onChange={(e) =>
+                  updateIngredient(index, "unit", e.target.value)
+                }
               />
+              <div className="flex gap-1 items-center">
+                <input
+                  type="number"
+                  placeholder="Metric"
+                  className="w-24 border rounded-md px-3 py-2"
+                  value={ing.metric_amount || ""}
+                  onChange={(e) =>
+                    updateIngredient(index, "metric_amount", e.target.value)
+                  }
+                />
+                <select
+                  className="border rounded-md px-1 py-2 bg-white text-sm"
+                  value={ing.metric_unit || "g"}
+                  onChange={(e) =>
+                    updateIngredient(index, "metric_unit", e.target.value)
+                  }
+                >
+                  <option value="g">g</option>
+                  <option value="ml">ml</option>
+                </select>
+              </div>
               <input
                 type="text"
                 placeholder="Ingredient name"
                 className="flex-grow border rounded-md px-3 py-2"
                 value={ing.name}
-                onChange={(e) => updateIngredient(index, "name", e.target.value)}
+                onChange={(e) =>
+                  updateIngredient(index, "name", e.target.value)
+                }
               />
               <button
                 type="button"
@@ -258,7 +326,9 @@ export default function RecipeForm({ initialData, isEditing = false }: RecipeFor
         <div className="space-y-3">
           {directions.map((step, index) => (
             <div key={index} className="flex gap-2 items-start">
-              <span className="mt-2 font-medium text-gray-500 w-6">{index + 1}.</span>
+              <span className="mt-2 font-medium text-gray-500 w-6">
+                {index + 1}.
+              </span>
               <textarea
                 className="flex-grow border rounded-md px-3 py-2"
                 rows={2}
@@ -289,7 +359,9 @@ export default function RecipeForm({ initialData, isEditing = false }: RecipeFor
       <section className="space-y-4">
         <h2 className="text-xl font-semibold border-b pb-2">Notes & Source</h2>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Notes</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Notes
+          </label>
           <textarea
             className="mt-1 w-full border rounded-md px-3 py-2"
             rows={3}
@@ -299,7 +371,9 @@ export default function RecipeForm({ initialData, isEditing = false }: RecipeFor
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Source URL</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Source URL
+          </label>
           <input
             type="url"
             className="mt-1 w-full border rounded-md px-3 py-2"
@@ -316,7 +390,11 @@ export default function RecipeForm({ initialData, isEditing = false }: RecipeFor
           disabled={loading}
           className="bg-blue-600 text-white px-8 py-3 rounded-md font-semibold hover:bg-blue-700 disabled:opacity-50 flex-grow"
         >
-          {loading ? "Saving..." : isEditing ? "Update Recipe" : "Create Recipe"}
+          {loading
+            ? "Saving..."
+            : isEditing
+              ? "Update Recipe"
+              : "Create Recipe"}
         </button>
         <button
           type="button"
