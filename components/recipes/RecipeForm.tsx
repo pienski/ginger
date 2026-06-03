@@ -26,13 +26,17 @@ export default function RecipeForm({
   const [servings, setServings] = useState(initialData?.servings || 2);
   const [tags, setTags] = useState<string[]>(initialData?.tags || []);
   const [newTag, setNewTag] = useState("");
+  const [useIngredientGroups, setUseIngredientGroups] = useState(
+    initialData?.use_ingredient_groups || false,
+  );
   const [ingredients, setIngredients] = useState<Ingredient[]>(
     initialData?.ingredients?.map((ing) => ({
       ...ing,
       metric_amount: ing.metric_amount ?? null,
       metric_unit: ing.metric_unit ?? "g",
+      group: ing.group || "",
     })) || [
-      { name: "", amount: 1, unit: "", metric_amount: null, metric_unit: "g" },
+      { name: "", amount: 1, unit: "", metric_amount: null, metric_unit: "g", group: "" },
     ],
   );
   const [directions, setDirections] = useState<string[]>(
@@ -56,7 +60,7 @@ export default function RecipeForm({
   const addIngredient = () => {
     setIngredients([
       ...ingredients,
-      { name: "", amount: 1, unit: "", metric_amount: null, metric_unit: "g" },
+      { name: "", amount: 1, unit: "", metric_amount: null, metric_unit: "g", group: "" },
     ]);
   };
   const updateIngredient = (
@@ -94,6 +98,12 @@ export default function RecipeForm({
     setLoading(true);
     setError(null);
 
+    if (useIngredientGroups && ingredients.some((ing) => ing.name.trim() !== "" && !ing.group?.trim())) {
+      setError("When using groups, all ingredients must belong to a group.");
+      setLoading(false);
+      return;
+    }
+
     const recipeData = {
       title,
       description,
@@ -101,6 +111,7 @@ export default function RecipeForm({
       servings: Number(servings),
       tags,
       ingredients: ingredients.filter((i) => i.name.trim() !== ""),
+      use_ingredient_groups: useIngredientGroups,
       directions: directions.filter((d) => d.trim() !== ""),
       notes,
       source_url: sourceUrl,
@@ -241,12 +252,24 @@ export default function RecipeForm({
 
       {/* Ingredients */}
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold border-b pb-2">Ingredients</h2>
+        <div className="flex justify-between items-end border-b pb-2">
+          <h2 className="text-xl font-semibold">Ingredients</h2>
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-600 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={useIngredientGroups}
+              onChange={(e) => setUseIngredientGroups(e.target.checked)}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            Use Groups
+          </label>
+        </div>
         <div className="hidden md:flex gap-2 mb-2 text-sm font-medium text-gray-500">
           <div className="w-20">Qty</div>
           <div className="w-24">Unit</div>
           <div className="w-36">Amount (g/ml)</div>
           <div className="flex-grow">Ingredient Name</div>
+          {useIngredientGroups && <div className="w-32">Group</div>}
           <div className="w-10"></div>
         </div>
         <div className="space-y-3">
@@ -301,6 +324,17 @@ export default function RecipeForm({
                   updateIngredient(index, "name", e.target.value)
                 }
               />
+              {useIngredientGroups && (
+                <input
+                  type="text"
+                  placeholder="Group (e.g. Sauce)"
+                  className="w-32 border rounded-md px-3 py-2"
+                  value={ing.group || ""}
+                  onChange={(e) =>
+                    updateIngredient(index, "group", e.target.value)
+                  }
+                />
+              )}
               <button
                 type="button"
                 onClick={() => removeIngredient(index)}

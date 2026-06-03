@@ -103,6 +103,7 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
           <IngredientList
             ingredients={recipe.ingredients}
             baseServings={recipe.servings}
+            useIngredientGroups={recipe.use_ingredient_groups}
           />
           {recipe.notes && (
             <div className="mt-8 p-6 bg-yellow-50 border border-yellow-100 rounded-lg">

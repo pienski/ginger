@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, jsonb, boolean } from "drizzle-orm/pg-core";
 import { createId } from "@paralleldrive/cuid2";
 
 export type Ingredient = {
@@ -7,6 +7,7 @@ export type Ingredient = {
   unit: string | null;
   metric_amount?: number | null;
   metric_unit?: 'g' | 'ml' | null;
+  group?: string | null;
 };
 
 export const recipes = pgTable("recipes", {
@@ -17,6 +18,7 @@ export const recipes = pgTable("recipes", {
   tags: jsonb("tags").$type<string[]>().notNull().default([]),
   servings: integer("servings").notNull(),
   ingredients: jsonb("ingredients").$type<Ingredient[]>().notNull(),
+  use_ingredient_groups: boolean("use_ingredient_groups").notNull().default(false),
   directions: jsonb("directions").$type<string[]>().notNull(),
   notes: text("notes"),
   source_url: text("source_url"),
