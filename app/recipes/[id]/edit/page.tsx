@@ -13,13 +13,24 @@ interface EditRecipePageProps {
 export default async function EditRecipePage({ params }: EditRecipePageProps) {
   const { id } = await params;
 
-  const recipe = await db.query.recipes.findFirst({
-    where: eq(recipes.id, id),
-  });
+  const [recipe, allRecipes] = await Promise.all([
+    db.query.recipes.findFirst({
+      where: eq(recipes.id, id),
+    }),
+    db.query.recipes.findMany({
+      columns: {
+        tags: true,
+      },
+    }),
+  ]);
 
   if (!recipe) {
     notFound();
   }
+
+  const existingTags = Array.from(
+    new Set(allRecipes.flatMap((r) => r.tags as string[])),
+  ).sort();
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -27,7 +38,7 @@ export default async function EditRecipePage({ params }: EditRecipePageProps) {
         <h1 className="text-3xl font-bold text-gray-900">Edit Recipe</h1>
         <p className="text-gray-500 mt-2">Update the details for &quot;{recipe.title}&quot;.</p>
       </div>
-      <RecipeForm initialData={recipe} isEditing={true} />
+      <RecipeForm initialData={recipe} isEditing={true} existingTags={existingTags} />
     </div>
   );
 }

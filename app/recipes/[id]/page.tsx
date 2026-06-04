@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import IngredientList from "@/components/recipes/IngredientList";
 import DirectionSteps from "@/components/recipes/DirectionSteps";
 import DeleteButton from "@/components/recipes/DeleteButton";
+import { getTagStyles, cn } from "@/lib/utils";
 
 interface RecipeDetailPageProps {
   params: Promise<{
@@ -47,14 +48,22 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
           <div className="mb-4">
             <h1 className="text-4xl font-bold text-gray-900 mb-2">{recipe.title}</h1>
             <div className="flex flex-wrap gap-2">
-              {recipe.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-sm font-medium border border-blue-100"
-                >
-                  {tag}
-                </span>
-              ))}
+              {recipe.tags.map((tag) => {
+                const styles = getTagStyles(tag);
+                return (
+                  <span
+                    key={tag}
+                    className={cn(
+                      "px-3 py-1 rounded-full text-sm font-medium border transition-colors",
+                      styles.bg,
+                      styles.text,
+                      styles.border,
+                    )}
+                  >
+                    {tag}
+                  </span>
+                );
+              })}
             </div>
           </div>
 

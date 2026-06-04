@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Ingredient, Recipe } from "@/lib/db/schema";
 import { createId } from "@paralleldrive/cuid2";
@@ -16,15 +16,10 @@ import {
   DragStartEvent,
   DragOverlay,
 } from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable,
-} from "@dnd-kit/sortable";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
+import { getTagStyles, cn } from "@/lib/utils";
 
 type FormIngredient = Ingredient & { id: string };
 type FormGroup = { id: string; name: string; ingredients: FormIngredient[] };
@@ -32,6 +27,7 @@ type FormGroup = { id: string; name: string; ingredients: FormIngredient[] };
 interface RecipeFormProps {
   initialData?: Partial<Recipe>;
   isEditing?: boolean;
+  existingTags?: string[];
 }
 
 // "Dumb" visual component for an ingredient row
@@ -279,6 +275,7 @@ function SortableGroup({
 export default function RecipeForm({
   initialData,
   isEditing = false,
+  existingTags,
 }: RecipeFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -293,6 +290,44 @@ export default function RecipeForm({
   const [servings, setServings] = useState(initialData?.servings || 2);
   const [tags, setTags] = useState<string[]>(initialData?.tags || []);
   const [newTag, setNewTag] = useState("");
+  const handleNewTagChange = (value: string) => {
+    setNewTag(value);
+    setHighlightedSuggestionIndex(-1);
+  };
+  const [isTagInputFocused, setIsTagInputFocused] = useState(false);
+  const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
+  const suggestionsContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (
+      highlightedSuggestionIndex >= 0 &&
+      suggestionsContainerRef.current &&
+      suggestionsContainerRef.current.children[highlightedSuggestionIndex]
+    ) {
+      const container = suggestionsContainerRef.current;
+      const element = container.children[highlightedSuggestionIndex] as HTMLElement;
+
+      const containerTop = container.scrollTop;
+      const containerBottom = containerTop + container.clientHeight;
+      const elementTop = element.offsetTop;
+      const elementBottom = elementTop + element.clientHeight;
+
+      if (elementTop < containerTop) {
+        container.scrollTop = elementTop;
+      } else if (elementBottom > containerBottom) {
+        container.scrollTop = elementBottom - container.clientHeight;
+      }
+    }
+  }, [highlightedSuggestionIndex]);
+
+  const filteredSuggestions = useMemo(() => {
+    if (!existingTags) return [];
+    const search = newTag.toLowerCase().trim();
+    return existingTags
+      .filter((tag) => !tags.includes(tag))
+      .filter((tag) => tag.toLowerCase().includes(search))
+      .sort();
+  }, [existingTags, tags, newTag]);
   const [useIngredientGroups, setUseIngredientGroups] = useState(
     initialData?.use_ingredient_groups || false,
   );
@@ -403,9 +438,10 @@ export default function RecipeForm({
   };
 
   // Tag Handlers
-  const addTag = () => {
-    if (newTag && !tags.includes(newTag)) {
-      setTags([...tags, newTag]);
+  const addTag = (tagToAdd?: string) => {
+    const tag = (typeof tagToAdd === "string" ? tagToAdd : newTag).trim();
+    if (tag && !tags.includes(tag)) {
+      setTags([...tags, tag]);
       setNewTag("");
     }
   };
@@ -774,43 +810,89 @@ export default function RecipeForm({
       <section className="space-y-4">
         <h2 className="text-xl font-semibold border-b pb-2">Tags</h2>
         <div className="flex gap-2">
-          <input
-            type="text"
-            className="flex-grow border rounded-md px-3 py-2"
-            value={newTag}
-            onChange={(e) => setNewTag(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addTag();
-              }
-            }}
-            placeholder="Add a tag (e.g. Dinner, Spicy)"
-          />
+          <div className="relative flex-grow">
+            <input
+              type="text"
+              className="w-full border rounded-md px-3 py-2"
+              value={newTag}
+              onChange={(e) => handleNewTagChange(e.target.value)}
+              onFocus={() => setIsTagInputFocused(true)}
+              onBlur={() => setTimeout(() => setIsTagInputFocused(false), 200)}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setHighlightedSuggestionIndex((prev) =>
+                    prev < filteredSuggestions.length - 1 ? prev + 1 : prev,
+                  );
+                } else if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setHighlightedSuggestionIndex((prev) => (prev > -1 ? prev - 1 : prev));
+                } else if (e.key === "Enter") {
+                  e.preventDefault();
+                  if (
+                    highlightedSuggestionIndex >= 0 &&
+                    highlightedSuggestionIndex < filteredSuggestions.length
+                  ) {
+                    addTag(filteredSuggestions[highlightedSuggestionIndex]);
+                  } else {
+                    addTag();
+                  }
+                }
+              }}
+              placeholder="Add a tag (e.g. Dinner, Spicy)"
+            />
+            {isTagInputFocused && filteredSuggestions.length > 0 && (
+              <div
+                ref={suggestionsContainerRef}
+                className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-[110px] overflow-y-auto"
+              >
+                {filteredSuggestions.map((suggestion, index) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    className={`w-full text-left px-3 py-2 text-sm ${
+                      index === highlightedSuggestionIndex ? "bg-blue-100" : "hover:bg-gray-100"
+                    }`}
+                    onClick={() => addTag(suggestion)}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <button
             type="button"
-            onClick={addTag}
+            onClick={() => addTag()}
             className="bg-gray-100 px-4 py-2 rounded-md hover:bg-gray-200"
           >
             Add
           </button>
         </div>
         <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full flex items-center gap-2"
-            >
-              {tag}
-              <button
-                type="button"
-                onClick={() => removeTag(tag)}
-                className="hover:text-blue-900 font-bold"
+          {tags.map((tag) => {
+            const styles = getTagStyles(tag);
+            return (
+              <span
+                key={tag}
+                className={cn(
+                  "px-3 py-1 rounded-full flex items-center gap-2 text-sm font-medium border transition-colors",
+                  styles.bg,
+                  styles.text,
+                  styles.border,
+                )}
               >
-                &times;
-              </button>
-            </span>
-          ))}
+                {tag}
+                <button
+                  type="button"
+                  onClick={() => removeTag(tag)}
+                  className="hover:opacity-70 font-bold transition-opacity"
+                >
+                  &times;
+                </button>
+              </span>
+            );
+          })}
         </div>
       </section>
 

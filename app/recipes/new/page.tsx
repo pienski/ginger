@@ -1,6 +1,17 @@
+import { db } from "@/lib/db";
 import RecipeForm from "@/components/recipes/RecipeForm";
 
-export default function NewRecipePage() {
+export default async function NewRecipePage() {
+  const allRecipes = await db.query.recipes.findMany({
+    columns: {
+      tags: true,
+    },
+  });
+
+  const existingTags = Array.from(
+    new Set(allRecipes.flatMap((r) => r.tags as string[])),
+  ).sort();
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto mb-8">
@@ -9,7 +20,7 @@ export default function NewRecipePage() {
           Enter the details manually or use the LLM import (coming soon).
         </p>
       </div>
-      <RecipeForm />
+      <RecipeForm existingTags={existingTags} />
     </div>
   );
 }
