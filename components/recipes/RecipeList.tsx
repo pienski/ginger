@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { Recipe } from "@/lib/db/schema";
 import RecipeCard from "./RecipeCard";
+import { getTagStyles, cn } from "@/lib/utils";
 
 type RecipeWithLastCooked = Recipe & { last_cooked_at: Date | null };
 
@@ -14,7 +15,7 @@ type SortOption = "recently_added" | "recently_cooked" | "alphabetical";
 
 export default function RecipeList({ initialRecipes }: RecipeListProps) {
   const [search, setSearch] = useState("");
-  const [selectedTag, setSelectedTag] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>("recently_added");
 
   const allTags = useMemo(() => {
@@ -23,14 +24,22 @@ export default function RecipeList({ initialRecipes }: RecipeListProps) {
     return Array.from(tags).sort();
   }, [initialRecipes]);
 
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
+  };
+
   const filteredAndSortedRecipes = useMemo(() => {
     return initialRecipes
       .filter((recipe) => {
         const matchesSearch = recipe.title
           .toLowerCase()
           .includes(search.toLowerCase());
-        const matchesTag = selectedTag === "" || recipe.tags.includes(selectedTag);
-        return matchesSearch && matchesTag;
+        const matchesTags =
+          selectedTags.length === 0 ||
+          selectedTags.every((tag) => recipe.tags.includes(tag));
+        return matchesSearch && matchesTags;
       })
       .sort((a, b) => {
         if (sortBy === "recently_added") {
@@ -48,11 +57,11 @@ export default function RecipeList({ initialRecipes }: RecipeListProps) {
         }
         return 0;
       });
-  }, [initialRecipes, search, selectedTag, sortBy]);
+  }, [initialRecipes, search, selectedTags, sortBy]);
 
   return (
     <div>
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
+      <div className="flex flex-col md:flex-row gap-4 mb-4">
         <div className="flex-grow">
           <input
             type="text"
@@ -65,18 +74,6 @@ export default function RecipeList({ initialRecipes }: RecipeListProps) {
         <div className="flex gap-4">
           <select
             className="px-4 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={selectedTag}
-            onChange={(e) => setSelectedTag(e.target.value)}
-          >
-            <option value="">All Tags</option>
-            {allTags.map((tag) => (
-              <option key={tag} value={tag}>
-                {tag}
-              </option>
-            ))}
-          </select>
-          <select
-            className="px-4 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
           >
@@ -86,6 +83,37 @@ export default function RecipeList({ initialRecipes }: RecipeListProps) {
           </select>
         </div>
       </div>
+
+      {allTags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-8">
+          {allTags.map((tag) => {
+            const isSelected = selectedTags.includes(tag);
+            const styles = getTagStyles(tag);
+            return (
+              <button
+                key={tag}
+                onClick={() => toggleTag(tag)}
+                className={cn(
+                  "px-3 py-1 rounded-full text-sm font-medium border transition-all",
+                  isSelected
+                    ? `${styles.bg} ${styles.text} ${styles.border} shadow-sm scale-105`
+                    : "bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200 hover:text-gray-900"
+                )}
+              >
+                {tag}
+              </button>
+            );
+          })}
+          {selectedTags.length > 0 && (
+            <button
+              onClick={() => setSelectedTags([])}
+              className="px-3 py-1 rounded-full text-sm font-medium text-blue-600 hover:underline"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredAndSortedRecipes.length === 0 ? (
