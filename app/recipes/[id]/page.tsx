@@ -73,21 +73,30 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
           )}
 
           <div className="mt-auto space-y-4 pt-6 border-t border-gray-100">
-            {recipe.source_url && (
-              <p className="text-sm text-gray-500">
-                Source:{" "}
-                <a
-                  href={recipe.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:underline"
-                >
-                  Original Recipe
-                </a>
-              </p>
-            )}
+            <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-gray-500">
+              {recipe.source_url && (
+                <p>
+                  Source:{" "}
+                  <a
+                    href={recipe.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    Original Recipe
+                  </a>
+                </p>
+              )}
+              
+              <div className="space-y-0.5 text-xs text-gray-400 text-right ml-auto">
+                <p>Created: {new Date(recipe.created_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                {recipe.updated_at && Math.abs(recipe.updated_at.getTime() - recipe.created_at.getTime()) > 1000 && (
+                  <p>Last edited: {new Date(recipe.updated_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                )}
+              </div>
+            </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pt-2">
               <div className="flex gap-4">
                 <Link
                   href={`/recipes/${recipe.id}/edit`}
