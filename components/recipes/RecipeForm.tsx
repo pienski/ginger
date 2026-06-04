@@ -279,6 +279,7 @@ export default function RecipeForm({
 }: RecipeFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form State
@@ -287,6 +288,36 @@ export default function RecipeForm({
     initialData?.description || "",
   );
   const [photoUrl, setPhotoUrl] = useState(initialData?.photo_url || "");
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to upload image");
+      }
+
+      const blob = await response.json();
+      setPhotoUrl(blob.url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload image");
+    } finally {
+      setIsUploading(false);
+    }
+  };
   const [servings, setServings] = useState(initialData?.servings || 2);
   const [tags, setTags] = useState<string[]>(initialData?.tags || []);
   const [newTag, setNewTag] = useState("");
@@ -779,16 +810,56 @@ export default function RecipeForm({
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Photo URL
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Photo
             </label>
-            <input
-              type="url"
-              className="mt-1 w-full border rounded-md px-3 py-2"
-              value={photoUrl}
-              onChange={(e) => setPhotoUrl(e.target.value)}
-              placeholder="https://..."
-            />
+            <div className="space-y-2">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                disabled={isUploading}
+                className="block w-full text-sm text-gray-500
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-md file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-gray-50 file:text-gray-700
+                  hover:file:bg-gray-100
+                  cursor-pointer disabled:opacity-50"
+              />
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400 whitespace-nowrap">or URL</span>
+                <input
+                  type="url"
+                  className="flex-1 border rounded-md px-3 py-1 text-sm"
+                  value={photoUrl}
+                  onChange={(e) => setPhotoUrl(e.target.value)}
+                  placeholder="https://..."
+                />
+              </div>
+              {isUploading && (
+                <div className="text-xs text-blue-600 animate-pulse">
+                  Uploading image...
+                </div>
+              )}
+              {photoUrl && (
+                <div className="relative w-full h-32 mt-2 group">
+                  <img
+                    src={photoUrl}
+                    alt="Recipe preview"
+                    className="w-full h-full object-cover rounded-md border"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setPhotoUrl("")}
+                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Remove photo"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
