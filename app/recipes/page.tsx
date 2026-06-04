@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { db } from "@/lib/db";
 import { recipes, mealHistory } from "@/lib/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
 import RecipeList from "@/components/recipes/RecipeList";
+import AddRecipeDropdown from "@/components/recipes/AddRecipeDropdown";
 
 export default async function RecipesPage() {
   const allRecipes = await db
@@ -30,12 +30,7 @@ export default async function RecipesPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Recipes</h1>
-        <Link
-          href="/recipes/new"
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-        >
-          Add Recipe
-        </Link>
+        <AddRecipeDropdown />
       </div>
 
       <RecipeList initialRecipes={allRecipes} />
