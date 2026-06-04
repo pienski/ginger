@@ -7,6 +7,7 @@ import IngredientList from "@/components/recipes/IngredientList";
 import DirectionSteps from "@/components/recipes/DirectionSteps";
 import DeleteButton from "@/components/recipes/DeleteButton";
 import { getTagStyles, cn } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
 
 interface RecipeDetailPageProps {
   params: Promise<{
@@ -119,7 +120,9 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
               <h4 className="font-bold text-yellow-800 mb-2 flex items-center gap-2">
                 <span>📝</span> Notes
               </h4>
-              <p className="text-yellow-900 whitespace-pre-wrap">{recipe.notes}</p>
+              <div className="text-yellow-900 markdown-content">
+                <ReactMarkdown>{recipe.notes}</ReactMarkdown>
+              </div>
             </div>
           )}
         </div>

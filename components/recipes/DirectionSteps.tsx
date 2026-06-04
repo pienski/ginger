@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 interface DirectionStepsProps {
   directions: string[];
@@ -41,8 +42,8 @@ export default function DirectionSteps({ directions }: DirectionStepsProps) {
               </div>
               <div className={`flex-grow pt-1 text-lg leading-relaxed ${
                 isChecked ? "line-through text-gray-400" : "text-gray-800"
-              }`}>
-                {step}
+              } markdown-content`}>
+                <ReactMarkdown>{step}</ReactMarkdown>
               </div>
             </div>
           );
