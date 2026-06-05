@@ -66,14 +66,14 @@ export default function RecipeList({ initialRecipes }: RecipeListProps) {
           <input
             type="text"
             placeholder="Search recipes..."
-            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <div className="flex gap-4">
           <select
-            className="px-4 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
           >
@@ -96,8 +96,8 @@ export default function RecipeList({ initialRecipes }: RecipeListProps) {
                 className={cn(
                   "px-3 py-1 rounded-full text-sm font-medium border transition-all",
                   isSelected
-                    ? `${styles.bg} ${styles.text} ${styles.border} shadow-sm scale-105`
-                    : "bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200 hover:text-gray-900"
+                    ? `${styles.bg} ${styles.text} ${styles.border} shadow-sm scale-105 dark:bg-opacity-20`
+                    : "bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-zinc-700 hover:bg-gray-200 dark:hover:bg-zinc-700 hover:text-gray-900 dark:hover:text-gray-200"
                 )}
               >
                 {tag}
@@ -107,7 +107,7 @@ export default function RecipeList({ initialRecipes }: RecipeListProps) {
           {selectedTags.length > 0 && (
             <button
               onClick={() => setSelectedTags([])}
-              className="px-3 py-1 rounded-full text-sm font-medium text-blue-600 hover:underline"
+              className="px-3 py-1 rounded-full text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
             >
               Clear all
             </button>
@@ -117,7 +117,7 @@ export default function RecipeList({ initialRecipes }: RecipeListProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredAndSortedRecipes.length === 0 ? (
-          <p className="text-gray-500 col-span-full text-center py-12">
+          <p className="text-gray-500 dark:text-gray-400 col-span-full text-center py-12">
             No recipes found matching your criteria.
           </p>
         ) : (

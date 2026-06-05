@@ -15,7 +15,7 @@ export default async function NewRecipePage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Suspense fallback={<div className="max-w-4xl mx-auto py-20 text-center text-gray-500">Loading...</div>}>
+      <Suspense fallback={<div className="max-w-4xl mx-auto py-20 text-center text-gray-500 dark:text-gray-400">Loading...</div>}>
         <NewRecipeClient existingTags={existingTags} />
       </Suspense>
     </div>

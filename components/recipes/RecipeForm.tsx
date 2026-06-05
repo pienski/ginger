@@ -50,11 +50,11 @@ function IngredientRow({
 }) {
   return (
     <div
-      className={`flex gap-2 items-start bg-white ${isOverlay ? "shadow-xl border rounded-md p-2 z-50 cursor-grabbing" : ""}`}
+      className={`flex gap-2 items-start bg-white dark:bg-zinc-900 transition-colors ${isOverlay ? "shadow-xl border dark:border-zinc-700 rounded-md p-2 z-50 cursor-grabbing" : ""}`}
     >
       <button
         type="button"
-        className="mt-2 p-1 text-gray-400 cursor-grab active:cursor-grabbing hover:text-gray-600"
+        className="mt-2 p-1 text-gray-400 cursor-grab active:cursor-grabbing hover:text-gray-600 dark:hover:text-gray-300"
         {...dragHandleProps}
         {...dragHandleListeners}
       >
@@ -64,14 +64,14 @@ function IngredientRow({
         type="number"
         step="any"
         placeholder="Qty"
-        className="w-20 border rounded-md px-3 py-2"
+        className="w-20 border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
         value={ingredient.amount}
         onChange={(e) => onUpdate?.("amount", e.target.value)}
       />
       <input
         type="text"
         placeholder="Unit"
-        className="w-24 border rounded-md px-3 py-2"
+        className="w-24 border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
         value={ingredient.unit || ""}
         onChange={(e) => onUpdate?.("unit", e.target.value)}
       />
@@ -79,12 +79,12 @@ function IngredientRow({
         <input
           type="number"
           placeholder="Metric"
-          className="w-24 border rounded-md px-3 py-2"
+          className="w-24 border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
           value={ingredient.metric_amount || ""}
           onChange={(e) => onUpdate?.("metric_amount", e.target.value)}
         />
         <select
-          className="border rounded-md px-1 py-2 bg-white text-sm"
+          className="border dark:border-zinc-800 rounded-md px-1 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
           value={ingredient.metric_unit || "g"}
           onChange={(e) => onUpdate?.("metric_unit", e.target.value)}
         >
@@ -95,14 +95,14 @@ function IngredientRow({
       <input
         type="text"
         placeholder="Ingredient name"
-        className="flex-grow border rounded-md px-3 py-2"
+        className="flex-grow border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
         value={ingredient.name}
         onChange={(e) => onUpdate?.("name", e.target.value)}
       />
       <button
         type="button"
         onClick={onRemove}
-        className="text-red-500 p-2 hover:bg-red-50 rounded"
+        className="text-red-500 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
       >
         &times;
       </button>
@@ -172,13 +172,13 @@ function GroupContainer({
 }) {
   return (
     <div
-      className={`border rounded-lg p-4 bg-gray-50 space-y-4 ${isOverlay ? "shadow-2xl border-blue-400 z-50 cursor-grabbing" : ""}`}
+      className={`border dark:border-zinc-800 rounded-lg p-4 bg-gray-50 dark:bg-zinc-800/50 space-y-4 transition-colors ${isOverlay ? "shadow-2xl border-blue-400 dark:border-blue-500 z-50 cursor-grabbing" : ""}`}
     >
       <div className="flex justify-between items-center gap-2">
         <div className="flex items-center gap-2 flex-grow">
           <button
             type="button"
-            className="p-1 text-gray-400 cursor-grab active:cursor-grabbing hover:text-gray-600"
+            className="p-1 text-gray-400 cursor-grab active:cursor-grabbing hover:text-gray-600 dark:hover:text-gray-300"
             {...dragHandleProps}
             {...dragHandleListeners}
           >
@@ -187,7 +187,7 @@ function GroupContainer({
           <input
             type="text"
             placeholder="Group Name (e.g. Sauce)"
-            className="flex-grow font-semibold bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none px-1 py-1"
+            className="flex-grow font-semibold bg-transparent border-b border-gray-300 dark:border-zinc-700 focus:border-blue-500 dark:focus:border-blue-400 outline-none px-1 py-1 text-gray-900 dark:text-gray-100 transition-colors"
             value={group.name}
             onChange={(e) => onUpdateName?.(e.target.value)}
           />
@@ -195,7 +195,7 @@ function GroupContainer({
         <button
           type="button"
           onClick={onRemove}
-          className="text-red-500 text-sm hover:underline"
+          className="text-red-500 dark:text-red-400 text-sm hover:underline"
         >
           Remove Group
         </button>
@@ -203,7 +203,7 @@ function GroupContainer({
 
       <div className="space-y-3">
         {!isOverlay && (
-          <div className="hidden md:flex gap-2 mb-1 text-xs font-medium text-gray-400 pl-8">
+          <div className="hidden md:flex gap-2 mb-1 text-xs font-medium text-gray-400 dark:text-gray-500 pl-8">
             <div className="w-20">Qty</div>
             <div className="w-24">Unit</div>
             <div className="w-36">Amount (g/ml)</div>
@@ -218,7 +218,7 @@ function GroupContainer({
         <button
           type="button"
           onClick={onAddIngredient}
-          className="text-blue-600 text-sm font-medium hover:underline ml-8"
+          className="text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline ml-8"
         >
           + Add Ingredient to {group.name || "Group"}
         </button>
@@ -782,27 +782,27 @@ export default function RecipeForm({
 
       {/* Basic Info */}
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold border-b pb-2">
+        <h2 className="text-xl font-semibold border-b dark:border-zinc-800 pb-2 text-gray-900 dark:text-gray-100">
           Basic Information
         </h2>
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Title*
           </label>
           <input
             type="text"
             required
-            className="mt-1 w-full border rounded-md px-3 py-2"
+            className="mt-1 w-full border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Description
           </label>
           <textarea
-            className="mt-1 w-full border rounded-md px-3 py-2"
+            className="mt-1 w-full border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
             rows={2}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -810,7 +810,7 @@ export default function RecipeForm({
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Photo
             </label>
             <div className="space-y-2">
@@ -819,26 +819,26 @@ export default function RecipeForm({
                 accept="image/*"
                 onChange={handleFileUpload}
                 disabled={isUploading}
-                className="block w-full text-sm text-gray-500
+                className="block w-full text-sm text-gray-500 dark:text-gray-400
                   file:mr-4 file:py-2 file:px-4
                   file:rounded-md file:border-0
                   file:text-sm file:font-semibold
-                  file:bg-gray-50 file:text-gray-700
-                  hover:file:bg-gray-100
+                  file:bg-gray-50 dark:file:bg-zinc-800 file:text-gray-700 dark:file:text-gray-300
+                  hover:file:bg-gray-100 dark:hover:file:bg-zinc-700
                   cursor-pointer disabled:opacity-50"
               />
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400 whitespace-nowrap">or URL</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">or URL</span>
                 <input
                   type="url"
-                  className="flex-1 border rounded-md px-3 py-1 text-sm"
+                  className="flex-1 border dark:border-zinc-800 rounded-md px-3 py-1 text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
                   value={photoUrl}
                   onChange={(e) => setPhotoUrl(e.target.value)}
                   placeholder="https://..."
                 />
               </div>
               {isUploading && (
-                <div className="text-xs text-blue-600 animate-pulse">
+                <div className="text-xs text-blue-600 dark:text-blue-400 animate-pulse">
                   Uploading image...
                 </div>
               )}
@@ -847,7 +847,7 @@ export default function RecipeForm({
                   <img
                     src={photoUrl}
                     alt="Recipe preview"
-                    className="w-full h-full object-cover rounded-md border"
+                    className="w-full h-full object-cover rounded-md border dark:border-zinc-800"
                   />
                   <button
                     type="button"
@@ -862,14 +862,14 @@ export default function RecipeForm({
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Base Servings*
             </label>
             <input
               type="number"
               required
               min="1"
-              className="mt-1 w-full border rounded-md px-3 py-2"
+              className="mt-1 w-full border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
               value={servings}
               onChange={(e) => setServings(Number(e.target.value))}
             />
@@ -879,12 +879,12 @@ export default function RecipeForm({
 
       {/* Tags */}
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold border-b pb-2">Tags</h2>
+        <h2 className="text-xl font-semibold border-b dark:border-zinc-800 pb-2 text-gray-900 dark:text-gray-100">Tags</h2>
         <div className="flex gap-2">
           <div className="relative flex-grow">
             <input
               type="text"
-              className="w-full border rounded-md px-3 py-2"
+              className="w-full border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors placeholder-gray-400 dark:placeholder-gray-500"
               value={newTag}
               onChange={(e) => handleNewTagChange(e.target.value)}
               onFocus={() => setIsTagInputFocused(true)}
@@ -915,14 +915,16 @@ export default function RecipeForm({
             {isTagInputFocused && filteredSuggestions.length > 0 && (
               <div
                 ref={suggestionsContainerRef}
-                className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-[110px] overflow-y-auto"
+                className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-900 border dark:border-zinc-800 rounded-md shadow-lg max-h-[110px] overflow-y-auto"
               >
                 {filteredSuggestions.map((suggestion, index) => (
                   <button
                     key={suggestion}
                     type="button"
-                    className={`w-full text-left px-3 py-2 text-sm ${
-                      index === highlightedSuggestionIndex ? "bg-blue-100" : "hover:bg-gray-100"
+                    className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                      index === highlightedSuggestionIndex 
+                        ? "bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100" 
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800"
                     }`}
                     onClick={() => addTag(suggestion)}
                   >
@@ -935,7 +937,7 @@ export default function RecipeForm({
           <button
             type="button"
             onClick={() => addTag()}
-            className="bg-gray-100 px-4 py-2 rounded-md hover:bg-gray-200"
+            className="bg-gray-100 dark:bg-zinc-800 px-4 py-2 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 transition-colors"
           >
             Add
           </button>
@@ -951,6 +953,7 @@ export default function RecipeForm({
                   styles.bg,
                   styles.text,
                   styles.border,
+                  "dark:bg-opacity-10 dark:border-opacity-30"
                 )}
               >
                 {tag}
@@ -969,14 +972,14 @@ export default function RecipeForm({
 
       {/* Ingredients */}
       <section className="space-y-6">
-        <div className="flex justify-between items-end border-b pb-2">
-          <h2 className="text-xl font-semibold">Ingredients</h2>
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-600 cursor-pointer">
+        <div className="flex justify-between items-end border-b dark:border-zinc-800 pb-2">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Ingredients</h2>
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer">
             <input
               type="checkbox"
               checked={useIngredientGroups}
               onChange={(e) => handleToggleGroups(e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded border-gray-300 dark:border-zinc-700 text-blue-600 focus:ring-blue-500 bg-white dark:bg-zinc-900"
             />
             Use Groups
           </label>
@@ -1094,15 +1097,15 @@ export default function RecipeForm({
 
       {/* Directions */}
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold border-b pb-2">Directions</h2>
+        <h2 className="text-xl font-semibold border-b dark:border-zinc-800 pb-2 text-gray-900 dark:text-gray-100">Directions</h2>
         <div className="space-y-3">
           {directions.map((step, index) => (
             <div key={index} className="flex gap-2 items-start">
-              <span className="mt-2 font-medium text-gray-500 w-6">
+              <span className="mt-2 font-medium text-gray-500 dark:text-gray-400 w-6">
                 {index + 1}.
               </span>
               <textarea
-                className="flex-grow border rounded-md px-3 py-2"
+                className="flex-grow border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
                 rows={2}
                 value={step}
                 onChange={(e) => updateDirection(index, e.target.value)}
@@ -1111,7 +1114,7 @@ export default function RecipeForm({
               <button
                 type="button"
                 onClick={() => removeDirection(index)}
-                className="text-red-500 p-2 hover:bg-red-50 rounded"
+                className="text-red-500 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
               >
                 &times;
               </button>
@@ -1121,7 +1124,7 @@ export default function RecipeForm({
         <button
           type="button"
           onClick={addDirection}
-          className="text-blue-600 font-medium hover:underline"
+          className="text-blue-600 dark:text-blue-400 font-medium hover:underline"
         >
           + Add Step
         </button>
@@ -1129,13 +1132,13 @@ export default function RecipeForm({
 
       {/* Notes & Source */}
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold border-b pb-2">Notes & Source</h2>
+        <h2 className="text-xl font-semibold border-b dark:border-zinc-800 pb-2 text-gray-900 dark:text-gray-100">Notes & Source</h2>
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Notes
           </label>
           <textarea
-            className="mt-1 w-full border rounded-md px-3 py-2"
+            className="mt-1 w-full border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
             rows={3}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -1143,12 +1146,12 @@ export default function RecipeForm({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Source URL
           </label>
           <input
             type="url"
-            className="mt-1 w-full border rounded-md px-3 py-2"
+            className="mt-1 w-full border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
             value={sourceUrl}
             onChange={(e) => setSourceUrl(e.target.value)}
             placeholder="Link to original recipe"
@@ -1160,7 +1163,7 @@ export default function RecipeForm({
         <button
           type="submit"
           disabled={loading}
-          className="bg-blue-600 text-white px-8 py-3 rounded-md font-semibold hover:bg-blue-700 disabled:opacity-50 flex-grow"
+          className="bg-blue-600 dark:bg-blue-700 text-white px-8 py-3 rounded-md font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 flex-grow transition-colors"
         >
           {loading
             ? "Saving..."
@@ -1171,7 +1174,7 @@ export default function RecipeForm({
         <button
           type="button"
           onClick={() => router.back()}
-          className="px-8 py-3 border rounded-md hover:bg-gray-50"
+          className="px-8 py-3 border dark:border-zinc-800 rounded-md hover:bg-gray-50 dark:hover:bg-zinc-800 text-gray-700 dark:text-gray-300 transition-colors"
         >
           Cancel
         </button>

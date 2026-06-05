@@ -26,19 +26,19 @@ export default function AddRecipeDropdown() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50 overflow-hidden rounded-tr-none">
+        <div className="absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-md shadow-lg z-50 overflow-hidden rounded-tr-none">
           <Link
             href="/recipes/new?mode=import"
-            className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
           >
-            <FileText size={16} className="text-blue-500" />
+            <FileText size={16} className="text-blue-500 dark:text-blue-400" />
             Paste Text (AI)
           </Link>
           <Link
             href="/recipes/new?mode=manual"
-            className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-t border-gray-100 transition-colors"
+            className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 border-t border-gray-100 dark:border-zinc-800 transition-colors"
           >
-            <Keyboard size={16} className="text-gray-400" />
+            <Keyboard size={16} className="text-gray-400 dark:text-gray-500" />
             Manual Form
           </Link>
         </div>

@@ -14,8 +14,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #09090b;
+    --foreground: #f4f4f5;
   }
 }
 
@@ -51,7 +51,7 @@ body {
 }
 
 .markdown-content a {
-  color: #2563eb;
+  color: #3b82f6;
   text-decoration: underline;
 }
 
@@ -60,5 +60,15 @@ body {
   padding: 0.2rem 0.4rem;
   border-radius: 0.25rem;
   font-family: monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  .markdown-content a {
+    color: #60a5fa;
+  }
+  .markdown-content code {
+    background-color: #27272a;
+    color: #f4f4f5;
+  }
 }
 

@@ -35,8 +35,8 @@ export default async function EditRecipePage({ params }: EditRecipePageProps) {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Edit Recipe</h1>
-        <p className="text-gray-500 mt-2">Update the details for &quot;{recipe.title}&quot;.</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Edit Recipe</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-2">Update the details for &quot;{recipe.title}&quot;.</p>
       </div>
       <RecipeForm initialData={recipe} isEditing={true} existingTags={existingTags} />
     </div>

@@ -41,7 +41,7 @@ export default function DeleteButton({ recipeId, recipeTitle }: DeleteButtonProp
     <button
       onClick={handleDelete}
       disabled={isDeleting}
-      className="text-red-600 hover:text-red-800 font-medium disabled:opacity-50"
+      className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium disabled:opacity-50 transition-colors"
     >
       {isDeleting ? "Deleting..." : "Delete Recipe"}
     </button>

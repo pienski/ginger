@@ -51,21 +51,21 @@ export default function NewRecipeClient({ existingTags }: NewRecipeClientProps) 
     return (
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Import Recipe with AI</h1>
-          <p className="text-gray-500 mt-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Import Recipe with AI</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">
             Paste any unstructured recipe text (e.g. from a blog, OCR, or notes) and our AI will structure it for you.
           </p>
         </div>
 
         <div className="space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 px-4 py-3 rounded">
               {error}
             </div>
           )}
           
           <textarea
-            className="w-full h-96 border rounded-lg p-4 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            className="w-full h-96 border dark:border-zinc-800 rounded-lg p-4 font-mono text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
             placeholder="Paste your recipe text here..."
             value={importText}
             onChange={(e) => setImportText(e.target.value)}
@@ -76,7 +76,7 @@ export default function NewRecipeClient({ existingTags }: NewRecipeClientProps) 
             <button
               onClick={handleParse}
               disabled={isParsing || !importText.trim()}
-              className="flex-grow bg-blue-600 text-white px-8 py-4 rounded-md font-semibold hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+              className="flex-grow bg-blue-600 dark:bg-blue-700 text-white px-8 py-4 rounded-md font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
             >
               {isParsing ? (
                 <>
@@ -93,7 +93,7 @@ export default function NewRecipeClient({ existingTags }: NewRecipeClientProps) 
             <button
               onClick={() => setMode("manual")}
               disabled={isParsing}
-              className="px-8 py-4 border rounded-md hover:bg-gray-50 transition-colors"
+              className="px-8 py-4 border dark:border-zinc-800 rounded-md hover:bg-gray-50 dark:hover:bg-zinc-800 text-gray-700 dark:text-gray-300 transition-colors"
             >
               Cancel & Use Manual Form
             </button>
@@ -107,10 +107,10 @@ export default function NewRecipeClient({ existingTags }: NewRecipeClientProps) 
     <div>
       <div className="max-w-4xl mx-auto mb-8 flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
             {parsedData ? "Review Parsed Recipe" : "Add New Recipe"}
           </h1>
-          <p className="text-gray-500 mt-2">
+          <p className="text-gray-500 dark:text-gray-400 mt-2">
             {parsedData 
               ? "We've filled in the details for you. Please review and make any necessary adjustments before saving."
               : "Enter the details manually below."}
@@ -119,7 +119,7 @@ export default function NewRecipeClient({ existingTags }: NewRecipeClientProps) 
         {!parsedData && (
           <button 
             onClick={() => setMode("import")}
-            className="text-blue-600 font-medium hover:underline flex items-center gap-1 mb-1"
+            className="text-blue-600 dark:text-blue-400 font-medium hover:underline flex items-center gap-1 mb-1"
           >
             <Sparkles size={16} />
             Use AI Import instead

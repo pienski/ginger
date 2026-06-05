@@ -9,24 +9,24 @@ export function Header() {
   if (!session) return null;
 
   return (
-    <header className="bg-white border-b">
+    <header className="bg-white dark:bg-zinc-900 border-b dark:border-zinc-800 transition-colors duration-300">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/recipes" className="text-xl font-bold text-blue-600">
-          Recipe App
+        <Link href="/recipes" className="text-xl font-bold text-blue-600 dark:text-blue-400">
+          Przepisownik
         </Link>
         <nav className="flex items-center gap-6">
-          <Link href="/recipes" className="text-gray-600 hover:text-blue-600 transition-colors">
+          <Link href="/recipes" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             Recipes
           </Link>
-          <Link href="/history" className="text-gray-600 hover:text-blue-600 transition-colors">
+          <Link href="/history" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             History
           </Link>
-          <Link href="/grocery" className="text-gray-600 hover:text-blue-600 transition-colors">
+          <Link href="/grocery" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             Groceries
           </Link>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="text-sm font-medium text-gray-500 hover:text-red-600 transition-colors"
+            className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
           >
             Sign out
           </button>
