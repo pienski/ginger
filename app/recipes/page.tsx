@@ -14,6 +14,7 @@ export default async function RecipesPage() {
       tags: recipes.tags,
       servings: recipes.servings,
       ingredients: recipes.ingredients,
+      use_ingredient_groups: recipes.use_ingredient_groups,
       directions: recipes.directions,
       notes: recipes.notes,
       source_url: recipes.source_url,

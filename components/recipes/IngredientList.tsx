@@ -103,7 +103,7 @@ export default function IngredientList({
                         </span>
                         {scaledMetricAmount !== null && (
                           <span className="text-gray-500 dark:text-gray-400 ml-1 text-sm font-medium">
-                            ({formatMetricAmount(scaledMetricAmount, ing.metric_unit)})
+                            ({formatMetricAmount(scaledMetricAmount, ing.metric_unit || null)})
                           </span>
                         )}
                         {" "}
@@ -149,7 +149,7 @@ export default function IngredientList({
                   </span>
                   {scaledMetricAmount !== null && (
                     <span className="text-gray-500 dark:text-gray-400 ml-1 text-sm font-medium">
-                      ({formatMetricAmount(scaledMetricAmount, ing.metric_unit)})
+                      ({formatMetricAmount(scaledMetricAmount, ing.metric_unit || null)})
                     </span>
                   )}
                   {" "}

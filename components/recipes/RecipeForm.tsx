@@ -1006,12 +1006,6 @@ export default function RecipeForm({
                     onUpdateName={(name) => updateGroupName(group.id, name)}
                     onRemove={() => removeGroup(group.id)}
                     onAddIngredient={() => addIngredientToGroup(group.id)}
-                    onUpdateIngredient={(ingId, field, value) =>
-                      updateGroupIngredient(group.id, ingId, field, value)
-                    }
-                    onRemoveIngredient={(ingId) =>
-                      removeGroupIngredient(group.id, ingId)
-                    }
                   >
                     <SortableContext
                       items={group.ingredients.map((i) => i.id)}
