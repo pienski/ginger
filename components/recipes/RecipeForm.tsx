@@ -18,7 +18,7 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
+import { GripVertical, AlertTriangle, X } from "lucide-react";
 import { getTagStyles, cn } from "@/lib/utils";
 
 type FormIngredient = Ingredient & { id: string };
@@ -773,14 +773,48 @@ export default function RecipeForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl mx-auto pb-20">
+    <>
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
-          {error}
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div 
+            className="bg-white dark:bg-zinc-900 border-2 border-red-500 rounded-xl shadow-2xl max-w-md w-full p-6 transform animate-in zoom-in-95 duration-200"
+            role="alert"
+          >
+            <div className="flex items-start gap-4">
+              <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-full flex-shrink-0">
+                <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="flex-grow">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">
+                  Wait, something&apos;s wrong
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {error}
+                </p>
+              </div>
+              <button 
+                onClick={() => setError(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                aria-label="Close error"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setError(null)}
+                className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors shadow-sm"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Basic Info */}
+      <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl mx-auto pb-20">
+        {/* Basic Info */}
       <section className="space-y-4">
         <h2 className="text-xl font-semibold border-b dark:border-zinc-800 pb-2 text-gray-900 dark:text-gray-100">
           Basic Information
@@ -1174,5 +1208,6 @@ export default function RecipeForm({
         </button>
       </div>
     </form>
+    </>
   );
 }

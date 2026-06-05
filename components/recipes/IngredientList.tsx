@@ -97,16 +97,20 @@ export default function IngredientList({
                         )}
                       </div>
                       <div className={`${isChecked ? "line-through text-gray-500 dark:text-gray-400" : "text-gray-800 dark:text-gray-200"}`}>
-                        <span className="font-bold text-gray-900 dark:text-gray-100">
-                          {formatAmount(scaledAmount)}
-                          {ing.unit ? ` ${ing.unit}` : ""}
-                        </span>
-                        {scaledMetricAmount !== null && (
-                          <span className="text-gray-500 dark:text-gray-400 ml-1 text-sm font-medium">
-                            ({formatMetricAmount(scaledMetricAmount, ing.metric_unit || null)})
-                          </span>
+                        {scaledAmount > 0 && (
+                          <>
+                            <span className="font-bold text-gray-900 dark:text-gray-100">
+                              {formatAmount(scaledAmount)}
+                              {ing.unit ? ` ${ing.unit}` : ""}
+                            </span>
+                            {scaledMetricAmount !== null && (
+                              <span className="text-gray-500 dark:text-gray-400 ml-1 text-sm font-medium">
+                                ({formatMetricAmount(scaledMetricAmount, ing.metric_unit || null)})
+                              </span>
+                            )}
+                            {" "}
+                          </>
                         )}
-                        {" "}
                         {ing.name}
                       </div>
                     </li>
@@ -143,16 +147,20 @@ export default function IngredientList({
                   )}
                 </div>
                 <div className={`${isChecked ? "line-through text-gray-500 dark:text-gray-400" : "text-gray-800 dark:text-gray-200"}`}>
-                  <span className="font-bold text-gray-900 dark:text-gray-100">
-                    {formatAmount(scaledAmount)}
-                    {ing.unit ? ` ${ing.unit}` : ""}
-                  </span>
-                  {scaledMetricAmount !== null && (
-                    <span className="text-gray-500 dark:text-gray-400 ml-1 text-sm font-medium">
-                      ({formatMetricAmount(scaledMetricAmount, ing.metric_unit || null)})
-                    </span>
+                  {scaledAmount > 0 && (
+                    <>
+                      <span className="font-bold text-gray-900 dark:text-gray-100">
+                        {formatAmount(scaledAmount)}
+                        {ing.unit ? ` ${ing.unit}` : ""}
+                      </span>
+                      {scaledMetricAmount !== null && (
+                        <span className="text-gray-500 dark:text-gray-400 ml-1 text-sm font-medium">
+                          ({formatMetricAmount(scaledMetricAmount, ing.metric_unit || null)})
+                        </span>
+                      )}
+                      {" "}
+                    </>
                   )}
-                  {" "}
                   {ing.name}
                 </div>
               </li>

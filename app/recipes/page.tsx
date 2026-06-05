@@ -4,6 +4,8 @@ import { desc, eq, sql } from "drizzle-orm";
 import RecipeList from "@/components/recipes/RecipeList";
 import AddRecipeDropdown from "@/components/recipes/AddRecipeDropdown";
 
+export const dynamic = "force-dynamic";
+
 export default async function RecipesPage() {
   const allRecipes = await db
     .select({

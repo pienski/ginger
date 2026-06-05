@@ -9,6 +9,8 @@ import DeleteButton from "@/components/recipes/DeleteButton";
 import { getTagStyles, cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 
+export const dynamic = "force-dynamic";
+
 interface RecipeDetailPageProps {
   params: Promise<{
     id: string;
