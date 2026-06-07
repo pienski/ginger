@@ -4,6 +4,8 @@ import { recipes } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import RecipeForm from "@/components/recipes/RecipeForm";
 
+export const dynamic = "force-dynamic";
+
 interface EditRecipePageProps {
   params: Promise<{
     id: string;

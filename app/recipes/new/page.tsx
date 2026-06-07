@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { db } from "@/lib/db";
 import NewRecipeClient from "@/components/recipes/NewRecipeClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function NewRecipePage() {
   const allRecipes = await db.query.recipes.findMany({
     columns: {
