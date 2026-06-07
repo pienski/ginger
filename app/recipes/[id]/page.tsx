@@ -103,11 +103,27 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
                   <span>·</span>
                 </>
               )}
-              <span>Created {new Date(recipe.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
+              <span>
+                Created{" "}
+                <span className="hidden sm:inline">
+                  {new Date(recipe.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
+                </span>
+                <span className="sm:hidden">
+                  {new Date(recipe.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                </span>
+              </span>
               {recipe.updated_at && Math.abs(recipe.updated_at.getTime() - recipe.created_at.getTime()) > 86400000 && (
                 <>
                   <span>·</span>
-                  <span>Edited {new Date(recipe.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
+                  <span>
+                    Edited{" "}
+                    <span className="hidden sm:inline">
+                      {new Date(recipe.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
+                    </span>
+                    <span className="sm:hidden">
+                      {new Date(recipe.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                    </span>
+                  </span>
                 </>
               )}
               <span>·</span>
