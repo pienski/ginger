@@ -82,6 +82,8 @@ export async function parseRecipe(text: string) {
     system:
       "You are an expert chef and recipe editor. Extract a structured recipe from the provided text. " +
       "Standardize fraction amounts to decimals (e.g., 1/2 becomes 0.5, 1/4 becomes 0.25). " +
+      "Use standardized units where possible: tsp, Tbsp, cup, piece, can, pkg, clove, pinch, slice. " +
+      "Use only singular forms of units (e.g., use 'cup' even if amount is 2). " +
       "If the recipe has distinct sections (e.g., 'For the crust', 'For the filling'), set 'use_ingredient_groups' to true and assign the section name to each ingredient's 'group' field. " +
       "If no sections are found, 'use_ingredient_groups' should be false and 'group' should be null or empty. " +
       "Clean up ingredient names (e.g., '2 cups of sifted flour' -> amount: 2, unit: 'cups', name: 'sifted flour')." +

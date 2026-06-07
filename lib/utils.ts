@@ -8,16 +8,23 @@ export function cn(...inputs: ClassValue[]) {
 export function formatAmount(amount: number): string {
   if (amount === 0) return "0";
 
-  // Fractions for amounts < 1
-  if (amount < 1) {
-    if (Math.abs(amount - 0.25) < 0.01) return "¼";
-    if (Math.abs(amount - 0.5) < 0.01) return "½";
-    if (Math.abs(amount - 0.75) < 0.01) return "¾";
-    if (Math.abs(amount - 0.33) < 0.02) return "⅓";
-    if (Math.abs(amount - 0.66) < 0.02) return "⅔";
+  const whole = Math.floor(amount);
+  const remainder = amount - whole;
+  let fraction = "";
+
+  if (Math.abs(remainder - 0.25) < 0.01) fraction = "¼";
+  else if (Math.abs(remainder - 0.5) < 0.01) fraction = "½";
+  else if (Math.abs(remainder - 0.75) < 0.01) fraction = "¾";
+  else if (Math.abs(remainder - 0.33) < 0.02) fraction = "⅓";
+  else if (Math.abs(remainder - 0.66) < 0.02) fraction = "⅔";
+
+  if (fraction) {
+    return whole > 0 ? `${whole}${fraction}` : fraction;
   }
 
-  // Round to 1 decimal place
+  if (remainder < 0.01) return whole.toString();
+
+  // Round to 1 decimal place if no fraction match
   return (Math.round(amount * 10) / 10).toString();
 }
 
@@ -65,4 +72,31 @@ export function getTagStyles(tag: string) {
   }
   const index = Math.abs(hash) % tagStyles.length;
   return tagStyles[index];
+}
+
+export const PREDEFINED_UNITS = [
+  { singular: "tsp", plural: "tsp" },
+  { singular: "Tbsp", plural: "Tbsp" },
+  { singular: "cup", plural: "cups" },
+  { singular: "piece", plural: "pieces" },
+  { singular: "can", plural: "cans" },
+  { singular: "pkg", plural: "pkg" },
+  { singular: "clove", plural: "cloves" },
+  { singular: "pinch", plural: "pinches" },
+  { singular: "slice", plural: "slices" },
+];
+
+export function getPluralizedUnit(unit: string | null, amount: number): string | null {
+  if (!unit) return null;
+  
+  const unitObj = PREDEFINED_UNITS.find(
+    (u) => u.singular.toLowerCase() === unit.toLowerCase() || u.plural.toLowerCase() === unit.toLowerCase()
+  );
+  
+  if (!unitObj) return unit;
+
+  // Rule: plural if amount > 1 or in decimals (0 < amount < 1)
+  const isPlural = amount > 1 || (amount > 0 && amount < 1);
+  
+  return isPlural ? unitObj.plural : unitObj.singular;
 }

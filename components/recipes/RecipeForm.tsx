@@ -19,7 +19,7 @@ import {
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, AlertTriangle, X } from "lucide-react";
-import { getTagStyles, cn } from "@/lib/utils";
+import { getTagStyles, cn, PREDEFINED_UNITS, getPluralizedUnit } from "@/lib/utils";
 
 type FormIngredient = Ingredient & { id: string };
 type FormGroup = { id: string; name: string; ingredients: FormIngredient[] };
@@ -70,6 +70,7 @@ function IngredientRow({
       />
       <input
         type="text"
+        list="unit-suggestions"
         placeholder="Unit"
         className="w-24 border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
         value={ingredient.unit || ""}
@@ -507,7 +508,10 @@ export default function RecipeForm({
           (field === "amount" || field === "metric_amount") && value !== ""
             ? Number(value)
             : value;
-        return { ...ing, [field]: val };
+        
+        let newIng = { ...ing, [field]: val };
+        
+        return newIng;
       }),
     );
   };
@@ -566,7 +570,10 @@ export default function RecipeForm({
               (field === "amount" || field === "metric_amount") && value !== ""
                 ? Number(value)
                 : value;
-            return { ...ing, [field]: val };
+            
+            let newIng = { ...ing, [field]: val };
+            
+            return newIng;
           }),
         };
       }),
@@ -1207,6 +1214,13 @@ export default function RecipeForm({
           Cancel
         </button>
       </div>
+      <datalist id="unit-suggestions">
+        {PREDEFINED_UNITS.map((u) => (
+          <option key={u.singular} value={u.singular}>
+            {u.singular}
+          </option>
+        ))}
+      </datalist>
     </form>
     </>
   );

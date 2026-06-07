@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Ingredient } from "@/lib/db/schema";
-import { formatAmount, formatMetricAmount } from "@/lib/utils";
+import { formatAmount, formatMetricAmount, getPluralizedUnit } from "@/lib/utils";
 
 interface IngredientListProps {
   ingredients: Ingredient[];
@@ -101,7 +101,7 @@ export default function IngredientList({
                           <>
                             <span className="font-bold text-gray-900 dark:text-gray-100">
                               {formatAmount(scaledAmount)}
-                              {ing.unit ? ` ${ing.unit}` : ""}
+                              {ing.unit ? ` ${getPluralizedUnit(ing.unit, scaledAmount)}` : ""}
                             </span>
                             {scaledMetricAmount !== null && (
                               <span className="text-gray-500 dark:text-gray-400 ml-1 text-sm font-medium">
@@ -151,7 +151,7 @@ export default function IngredientList({
                     <>
                       <span className="font-bold text-gray-900 dark:text-gray-100">
                         {formatAmount(scaledAmount)}
-                        {ing.unit ? ` ${ing.unit}` : ""}
+                        {ing.unit ? ` ${getPluralizedUnit(ing.unit, scaledAmount)}` : ""}
                       </span>
                       {scaledMetricAmount !== null && (
                         <span className="text-gray-500 dark:text-gray-400 ml-1 text-sm font-medium">
