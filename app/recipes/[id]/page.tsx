@@ -8,6 +8,7 @@ import DirectionSteps from "@/components/recipes/DirectionSteps";
 import DeleteButton from "@/components/recipes/DeleteButton";
 import { getTagStyles, cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import { Pencil, StickyNote, ArrowLeft, ExternalLink } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -29,35 +30,35 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="flex flex-col md:flex-row gap-8 mb-8">
+    <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <div className="flex flex-col md:flex-row gap-6 mb-8">
         {/* Left column: Photo (or placeholder) */}
-        <div className="w-full md:w-1/2 lg:w-2/5">
+        <div className="w-full md:w-64 lg:w-80 shrink-0">
           {recipe.photo_url ? (
             <img
               src={recipe.photo_url}
               alt={recipe.title}
-              className="w-full h-[300px] md:h-[450px] object-cover rounded-xl shadow-lg"
+              className="w-full aspect-[4/3] object-cover rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800"
             />
           ) : (
-            <div className="w-full h-[300px] md:h-[450px] bg-gray-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center text-8xl shadow-inner border border-dashed border-gray-300 dark:border-zinc-700">
+            <div className="w-full aspect-[4/3] bg-gray-50 dark:bg-zinc-900 rounded-xl flex items-center justify-center text-6xl shadow-inner border border-dashed border-gray-200 dark:border-zinc-800 text-gray-400">
               🍳
             </div>
           )}
         </div>
 
         {/* Right column: Title, tags, description, meta */}
-        <div className="w-full md:w-1/2 lg:w-3/5 flex flex-col">
-          <div className="mb-4">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">{recipe.title}</h1>
-            <div className="flex flex-wrap gap-2">
+        <div className="w-full md:flex-1 flex flex-col justify-between py-1">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-3 leading-tight">{recipe.title}</h1>
+            <div className="flex flex-wrap gap-2 mb-4">
               {recipe.tags.map((tag) => {
                 const styles = getTagStyles(tag);
                 return (
                   <span
                     key={tag}
                     className={cn(
-                      "px-3 py-1 rounded-full text-sm font-medium border transition-colors",
+                      "px-3 py-1 rounded-full text-xs font-medium border transition-colors font-sans",
                       styles.bg,
                       styles.text,
                       styles.border,
@@ -69,76 +70,81 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
                 );
               })}
             </div>
+            {recipe.description && (
+              <p className="text-base text-gray-600 dark:text-gray-400 italic line-clamp-2 hover:line-clamp-none transition-all cursor-default">
+                {recipe.description}
+              </p>
+            )}
           </div>
 
-          {recipe.description && (
-            <p className="text-lg text-gray-600 dark:text-gray-400 mb-6 italic">{recipe.description}</p>
-          )}
-
-          <div className="mt-auto space-y-4 pt-6 border-t border-gray-100 dark:border-zinc-800">
-            <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-gray-500 dark:text-gray-400">
+          <div className="mt-6 md:mt-auto pt-4 border-t border-gray-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Link
+                href={`/recipes/${recipe.id}/edit`}
+                className="flex items-center gap-2 bg-blue-600 dark:bg-blue-700 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-sm"
+              >
+                <Pencil className="w-3.5 h-3.5" /> Edit
+              </Link>
+              <DeleteButton recipeId={recipe.id} recipeTitle={recipe.title} />
+            </div>
+            
+            <div className="flex items-center gap-2.5 text-xs text-gray-400 dark:text-gray-500">
               {recipe.source_url && (
-                <p>
-                  Source:{" "}
+                <>
                   <a
                     href={recipe.source_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-500 dark:text-blue-400 hover:underline"
+                    className="flex items-center gap-1 text-gray-400 hover:text-blue-500 transition-colors"
+                    title="Original Recipe"
                   >
-                    Original Recipe
+                    <ExternalLink className="w-3 h-3" /> Source
                   </a>
-                </p>
+                  <span>·</span>
+                </>
               )}
-              
-              <div className="space-y-0.5 text-xs text-gray-400 dark:text-gray-500 text-right ml-auto">
-                <p>Created: {new Date(recipe.created_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</p>
-                {recipe.updated_at && Math.abs(recipe.updated_at.getTime() - recipe.created_at.getTime()) > 1000 && (
-                  <p>Last edited: {new Date(recipe.updated_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <div className="flex gap-4">
-                <Link
-                  href={`/recipes/${recipe.id}/edit`}
-                  className="bg-blue-600 dark:bg-blue-700 text-white px-6 py-2 rounded-md font-medium hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-                >
-                  Edit Recipe
-                </Link>
-                <DeleteButton recipeId={recipe.id} recipeTitle={recipe.title} />
-              </div>
+              <span>Created {new Date(recipe.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
+              {recipe.updated_at && Math.abs(recipe.updated_at.getTime() - recipe.created_at.getTime()) > 86400000 && (
+                <>
+                  <span>·</span>
+                  <span>Edited {new Date(recipe.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
+                </>
+              )}
+              <span>·</span>
               <Link
                 href="/recipes"
-                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 font-medium"
+                className="flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:underline"
               >
-                Back to List
+                <ArrowLeft className="w-3 h-3" /> Back to list
               </Link>
             </div>
           </div>
         </div>
       </div>
 
+      {recipe.notes && (
+        <div className="mb-8 flex gap-4 items-start bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20 rounded-xl p-5">
+          <StickyNote className="w-5 h-5 text-yellow-600 dark:text-yellow-500 mt-0.5 shrink-0" />
+          <div>
+            <h4 className="font-bold text-yellow-800 dark:text-yellow-400 text-[10px] uppercase tracking-wider mb-1">
+              Notes
+            </h4>
+            <div className="text-yellow-900 dark:text-yellow-200 text-base leading-relaxed markdown-content">
+              <ReactMarkdown>{recipe.notes}</ReactMarkdown>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-5">
           <IngredientList
             ingredients={recipe.ingredients}
             baseServings={recipe.servings}
             useIngredientGroups={recipe.use_ingredient_groups}
           />
-          {recipe.notes && (
-            <div className="mt-8 p-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-900/30 rounded-lg">
-              <h4 className="font-bold text-yellow-800 dark:text-yellow-400 mb-2 flex items-center gap-2">
-                <span>📝</span> Notes
-              </h4>
-              <div className="text-yellow-900 dark:text-yellow-200 markdown-content">
-                <ReactMarkdown>{recipe.notes}</ReactMarkdown>
-              </div>
-            </div>
-          )}
         </div>
-        <div className="lg:col-span-8">
+        <div className="lg:col-span-7">
           <DirectionSteps directions={recipe.directions} />
         </div>
       </div>

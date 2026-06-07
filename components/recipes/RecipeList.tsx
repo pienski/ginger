@@ -66,14 +66,14 @@ export default function RecipeList({ initialRecipes }: RecipeListProps) {
           <input
             type="text"
             placeholder="Search recipes..."
-            className="w-full px-4 py-2 border dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            className="w-full px-4 py-2 border border-gray-100 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <div className="flex gap-4">
           <select
-            className="px-4 py-2 border dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            className="px-4 py-2 border border-gray-100 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm cursor-pointer"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
           >
@@ -94,10 +94,10 @@ export default function RecipeList({ initialRecipes }: RecipeListProps) {
                 key={tag}
                 onClick={() => toggleTag(tag)}
                 className={cn(
-                  "px-3 py-1 rounded-full text-sm font-medium border transition-all",
+                  "px-3 py-1 rounded-full text-xs font-medium border transition-all font-sans",
                   isSelected
                     ? `${styles.bg} ${styles.text} ${styles.border} shadow-sm scale-105 dark:bg-opacity-20`
-                    : "bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-zinc-700 hover:bg-gray-200 dark:hover:bg-zinc-700 hover:text-gray-900 dark:hover:text-gray-200"
+                    : "bg-gray-50 dark:bg-zinc-800/50 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-zinc-800 hover:bg-white dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-gray-200"
                 )}
               >
                 {tag}

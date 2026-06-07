@@ -9,9 +9,9 @@ export function Header() {
   if (!session) return null;
 
   return (
-    <header className="bg-white dark:bg-zinc-900 border-b dark:border-zinc-800 transition-colors duration-300">
+    <header className="bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 transition-colors duration-300">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/recipes" className="text-xl font-bold text-blue-600 dark:text-blue-400">
+        <Link href="/recipes" className="text-xl font-bold text-gray-900 dark:text-gray-100">
           {process.env.APP_NAME || "Recipe App"}
         </Link>
         <nav className="flex items-center gap-6">
