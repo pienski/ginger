@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Przepisownik",
+  title: process.env.APP_NAME || "Recipe App",
   description: "A personal recipe manager for two.",
 };
 
