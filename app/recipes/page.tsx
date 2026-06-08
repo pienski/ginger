@@ -7,6 +7,10 @@ import AddRecipeDropdown from "@/components/recipes/AddRecipeDropdown";
 export const dynamic = "force-dynamic";
 
 export default async function RecipesPage() {
+  const categories = process.env.CATEGORIES 
+    ? process.env.CATEGORIES.split(',').map(c => c.trim()).filter(Boolean) 
+    : [];
+
   const allRecipes = await db
     .select({
       id: recipes.id,
@@ -36,7 +40,7 @@ export default async function RecipesPage() {
         <AddRecipeDropdown />
       </div>
 
-      <RecipeList initialRecipes={allRecipes} />
+      <RecipeList initialRecipes={allRecipes} categories={categories} />
     </div>
   );
 }

@@ -9,20 +9,27 @@ type RecipeWithLastCooked = Recipe & { last_cooked_at: Date | null };
 
 interface RecipeListProps {
   initialRecipes: RecipeWithLastCooked[];
+  categories?: string[];
 }
 
 type SortOption = "recently_added" | "recently_cooked" | "alphabetical";
 
-export default function RecipeList({ initialRecipes }: RecipeListProps) {
+export default function RecipeList({ initialRecipes, categories = [] }: RecipeListProps) {
   const [search, setSearch] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>("recently_added");
 
   const allTags = useMemo(() => {
-    const tags = new Set<string>();
-    initialRecipes.forEach((r) => r.tags.forEach((t) => tags.add(t)));
-    return Array.from(tags).sort();
-  }, [initialRecipes]);
+    const otherTags = new Set<string>();
+    initialRecipes.forEach((r) => r.tags.forEach((t) => {
+      if (!categories.includes(t)) {
+        otherTags.add(t);
+      }
+    }));
+    
+    const sortedOtherTags = Array.from(otherTags).sort((a, b) => a.localeCompare(b));
+    return [...categories, ...sortedOtherTags];
+  }, [initialRecipes, categories]);
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>

@@ -357,8 +357,7 @@ export default function RecipeForm({
     const search = newTag.toLowerCase().trim();
     return existingTags
       .filter((tag) => !tags.includes(tag))
-      .filter((tag) => tag.toLowerCase().includes(search))
-      .sort();
+      .filter((tag) => tag.toLowerCase().includes(search));
   }, [existingTags, tags, newTag]);
   const [useIngredientGroups, setUseIngredientGroups] = useState(
     initialData?.use_ingredient_groups || false,
@@ -509,7 +508,7 @@ export default function RecipeForm({
             ? Number(value)
             : value;
         
-        let newIng = { ...ing, [field]: val };
+        const newIng = { ...ing, [field]: val };
         
         return newIng;
       }),
@@ -571,7 +570,7 @@ export default function RecipeForm({
                 ? Number(value)
                 : value;
             
-            let newIng = { ...ing, [field]: val };
+            const newIng = { ...ing, [field]: val };
             
             return newIng;
           }),

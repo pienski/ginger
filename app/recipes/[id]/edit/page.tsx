@@ -14,6 +14,10 @@ interface EditRecipePageProps {
 
 export default async function EditRecipePage({ params }: EditRecipePageProps) {
   const { id } = await params;
+  
+  const categories = process.env.CATEGORIES 
+    ? process.env.CATEGORIES.split(',').map(c => c.trim()).filter(Boolean) 
+    : [];
 
   const [recipe, allRecipes] = await Promise.all([
     db.query.recipes.findFirst({
@@ -30,9 +34,12 @@ export default async function EditRecipePage({ params }: EditRecipePageProps) {
     notFound();
   }
 
-  const existingTags = Array.from(
-    new Set(allRecipes.flatMap((r) => r.tags as string[])),
-  ).sort();
+  const dbTags = new Set(allRecipes.flatMap((r) => r.tags as string[]));
+  const otherTags = Array.from(dbTags)
+    .filter(tag => !categories.includes(tag))
+    .sort((a, b) => a.localeCompare(b));
+
+  const existingTags = [...categories, ...otherTags];
 
   return (
     <div className="container mx-auto px-4 py-8">

@@ -61,6 +61,8 @@ Hosting your own instance of Recipe Book is straightforward, especially with Ver
 3.  **Configure Environment Variables**:
     Add the following in the Vercel project settings:
     - `DEEPSEEK_API_KEY`: Your DeepSeek API key.
+    - `APP_NAME`: Custom name of your recipe app.
+    - `CATEGORIES`: A comma-separated list of tags to be prioritized as categories (e.g., `Breakfast,Dinner,Dessert`). These will always appear first in filters and suggestions.
     - `NEXTAUTH_SECRET`: The secret you generated.
     - `NEXTAUTH_URL`: Your production URL (e.g., `https://your-app.vercel.app`).
     - `AUTH_USER_1_EMAIL`: Email for the first user.

@@ -15,7 +15,7 @@ const ingredientSchema = z.object({
     .string()
     .nullable()
     .describe(
-      "The unit of measurement, e.g., 'cups', 'tbsp', 'g'. Use null for countable items like '2 large eggs'.",
+      "The unit of measurement, e.g., 'cups', 'Tbsp', 'g'. Use null for countable items like '2 large eggs'.",
     ),
   metric_amount: z
     .number()

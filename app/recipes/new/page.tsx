@@ -5,15 +5,22 @@ import NewRecipeClient from "@/components/recipes/NewRecipeClient";
 export const dynamic = "force-dynamic";
 
 export default async function NewRecipePage() {
+  const categories = process.env.CATEGORIES 
+    ? process.env.CATEGORIES.split(',').map(c => c.trim()).filter(Boolean) 
+    : [];
+
   const allRecipes = await db.query.recipes.findMany({
     columns: {
       tags: true,
     },
   });
 
-  const existingTags = Array.from(
-    new Set(allRecipes.flatMap((r) => r.tags as string[])),
-  ).sort();
+  const dbTags = new Set(allRecipes.flatMap((r) => r.tags as string[]));
+  const otherTags = Array.from(dbTags)
+    .filter(tag => !categories.includes(tag))
+    .sort((a, b) => a.localeCompare(b));
+
+  const existingTags = [...categories, ...otherTags];
 
   return (
     <div className="container mx-auto px-4 py-8">
