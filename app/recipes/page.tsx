@@ -1,3 +1,6 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { recipes, mealHistory } from "@/lib/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
@@ -7,6 +10,9 @@ import AddRecipeDropdown from "@/components/recipes/AddRecipeDropdown";
 export const dynamic = "force-dynamic";
 
 export default async function RecipesPage() {
+  const session = await getServerSession(authOptions);
+  if (!session) redirect("/login");
+
   const categories = process.env.CATEGORIES 
     ? process.env.CATEGORIES.split(',').map(c => c.trim()).filter(Boolean) 
     : [];

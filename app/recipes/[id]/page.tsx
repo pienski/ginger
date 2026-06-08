@@ -1,5 +1,7 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { recipes } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -19,6 +21,9 @@ interface RecipeDetailPageProps {
 }
 
 export default async function RecipeDetailPage({ params }: RecipeDetailPageProps) {
+  const session = await getServerSession(authOptions);
+  if (!session) redirect("/login");
+
   const { id } = await params;
   
   const recipe = await db.query.recipes.findFirst({
