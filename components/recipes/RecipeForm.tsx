@@ -23,6 +23,7 @@ import { getTagStyles, cn, PREDEFINED_UNITS, getPluralizedUnit } from "@/lib/uti
 
 type FormIngredient = Ingredient & { id: string };
 type FormGroup = { id: string; name: string; ingredients: FormIngredient[] };
+type DirectionItem = { id: string; text: string };
 
 interface RecipeFormProps {
   initialData?: Partial<Recipe>;
@@ -48,6 +49,11 @@ function IngredientRow({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dragHandleListeners?: any;
 }) {
+  const datalistId = `unit-suggestions-${ingredient.id}`;
+  const filteredUnits = PREDEFINED_UNITS.filter(
+    (u) => u.singular.toLowerCase() !== (ingredient.unit || "").toLowerCase()
+  );
+
   return (
     <div
       className={`flex gap-2 items-start bg-white dark:bg-zinc-900 transition-colors ${isOverlay ? "shadow-xl border dark:border-zinc-700 rounded-md p-2 z-50 cursor-grabbing" : ""}`}
@@ -70,12 +76,19 @@ function IngredientRow({
       />
       <input
         type="text"
-        list="unit-suggestions"
+        list={datalistId}
         placeholder="Unit"
         className="w-24 border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
         value={ingredient.unit || ""}
         onChange={(e) => onUpdate?.("unit", e.target.value)}
       />
+      <datalist id={datalistId}>
+        {filteredUnits.map((u) => (
+          <option key={u.singular} value={u.singular}>
+            {u.singular}
+          </option>
+        ))}
+      </datalist>
       <div className="flex gap-1 items-center">
         <input
           type="number"
@@ -140,6 +153,100 @@ function SortableIngredientRow({
     <div ref={setNodeRef} style={style}>
       <IngredientRow
         ingredient={ingredient}
+        onUpdate={onUpdate}
+        onRemove={onRemove}
+        dragHandleProps={attributes}
+        dragHandleListeners={listeners}
+      />
+    </div>
+  );
+}
+
+// "Dumb" visual component for a direction row
+function DirectionRow({
+  step,
+  index,
+  onUpdate,
+  onRemove,
+  isOverlay = false,
+  dragHandleProps = {},
+  dragHandleListeners = {},
+}: {
+  step: string;
+  index: number;
+  onUpdate?: (value: string) => void;
+  onRemove?: () => void;
+  isOverlay?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dragHandleProps?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dragHandleListeners?: any;
+}) {
+  return (
+    <div
+      className={`flex gap-2 items-start bg-white dark:bg-zinc-900 transition-colors ${isOverlay ? "shadow-xl border dark:border-zinc-700 rounded-md p-2 z-50 cursor-grabbing" : ""}`}
+    >
+      <button
+        type="button"
+        className="mt-2 p-1 text-gray-400 cursor-grab active:cursor-grabbing hover:text-gray-600 dark:hover:text-gray-300"
+        {...dragHandleProps}
+        {...dragHandleListeners}
+      >
+        <GripVertical size={20} />
+      </button>
+      <span className="mt-2 font-medium text-gray-500 dark:text-gray-400 w-6">
+        {index + 1}.
+      </span>
+      <textarea
+        className="flex-grow border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+        rows={2}
+        value={step}
+        onChange={(e) => onUpdate?.(e.target.value)}
+        placeholder="What to do next..."
+      />
+      <button
+        type="button"
+        onClick={onRemove}
+        className="text-red-500 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+      >
+        &times;
+      </button>
+    </div>
+  );
+}
+
+// Sortable wrapper for direction row
+function SortableDirectionRow({
+  direction,
+  index,
+  onUpdate,
+  onRemove,
+}: {
+  direction: DirectionItem;
+  index: number;
+  onUpdate: (value: string) => void;
+  onRemove: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: direction.id });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    opacity: isDragging ? 0.3 : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <DirectionRow
+        step={direction.text}
+        index={index}
         onUpdate={onUpdate}
         onRemove={onRemove}
         dragHandleProps={attributes}
@@ -420,9 +527,13 @@ export default function RecipeForm({
     return null;
   }, [ingredients, groups, activeId, useIngredientGroups]);
 
-  const [directions, setDirections] = useState<string[]>(
-    initialData?.directions || [""],
+  const [directions, setDirections] = useState<DirectionItem[]>(
+    initialData?.directions?.map((d) => ({ id: createId(), text: d })) || [
+      { id: createId(), text: "" },
+    ],
   );
+
+  const activeDirection = useMemo(() => directions.find(d => d.id === activeId), [directions, activeId]);
   const [notes, setNotes] = useState(initialData?.notes || "");
   const [sourceUrl, setSourceUrl] = useState(initialData?.source_url || "");
 
@@ -693,15 +804,27 @@ export default function RecipeForm({
 
   // Direction Handlers
   const addDirection = () => {
-    setDirections([...directions, ""]);
+    setDirections([...directions, { id: createId(), text: "" }]);
   };
-  const updateDirection = (index: number, value: string) => {
-    const newDirections = [...directions];
-    newDirections[index] = value;
-    setDirections(newDirections);
+  const updateDirection = (id: string, value: string) => {
+    setDirections(directions.map((d) => (d.id === id ? { ...d, text: value } : d)));
   };
-  const removeDirection = (index: number) => {
-    setDirections(directions.filter((_, i) => i !== index));
+  const removeDirection = (id: string) => {
+    setDirections(directions.filter((d) => d.id !== id));
+  };
+
+  const handleDirectionDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+    if (!over) return;
+
+    if (active.id !== over.id) {
+      setDirections((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -749,7 +872,7 @@ export default function RecipeForm({
       tags,
       ingredients: finalIngredients,
       use_ingredient_groups: useIngredientGroups,
-      directions: directions.filter((d) => d.trim() !== ""),
+      directions: directions.map((d) => d.text).filter((t) => t.trim() !== ""),
       notes,
       source_url: sourceUrl,
     };
@@ -1132,29 +1255,40 @@ export default function RecipeForm({
       {/* Directions */}
       <section className="space-y-4">
         <h2 className="text-xl font-semibold border-b dark:border-zinc-800 pb-2 text-gray-900 dark:text-gray-100">Directions</h2>
-        <div className="space-y-3">
-          {directions.map((step, index) => (
-            <div key={index} className="flex gap-2 items-start">
-              <span className="mt-2 font-medium text-gray-500 dark:text-gray-400 w-6">
-                {index + 1}.
-              </span>
-              <textarea
-                className="flex-grow border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
-                rows={2}
-                value={step}
-                onChange={(e) => updateDirection(index, e.target.value)}
-                placeholder="What to do next..."
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDirectionDragEnd}
+          onDragCancel={() => setActiveId(null)}
+        >
+          <div className="space-y-3">
+            <SortableContext
+              items={directions.map((d) => d.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {directions.map((direction, index) => (
+                <SortableDirectionRow
+                  key={direction.id}
+                  direction={direction}
+                  index={index}
+                  onUpdate={(value) => updateDirection(direction.id, value)}
+                  onRemove={() => removeDirection(direction.id)}
+                />
+              ))}
+            </SortableContext>
+          </div>
+
+          <DragOverlay adjustScale={false}>
+            {activeId && activeDirection ? (
+              <DirectionRow
+                step={activeDirection.text}
+                index={directions.findIndex((d) => d.id === activeId)}
+                isOverlay
               />
-              <button
-                type="button"
-                onClick={() => removeDirection(index)}
-                className="text-red-500 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-              >
-                &times;
-              </button>
-            </div>
-          ))}
-        </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
         <button
           type="button"
           onClick={addDirection}
@@ -1213,13 +1347,6 @@ export default function RecipeForm({
           Cancel
         </button>
       </div>
-      <datalist id="unit-suggestions">
-        {PREDEFINED_UNITS.map((u) => (
-          <option key={u.singular} value={u.singular}>
-            {u.singular}
-          </option>
-        ))}
-      </datalist>
     </form>
     </>
   );
