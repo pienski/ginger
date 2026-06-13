@@ -2,9 +2,6 @@
 
 A modern, minimalist recipe manager and meal planner built for families and couples. Originally designed to replace a Notion-based recipe store, this app focuses on a clean cooking experience, smart scaling, and effortless recipe importing using AI.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-
 ---
 
 ## ✨ Key Features
@@ -76,12 +73,6 @@ Once the project is deployed, you need to push the schema to your database:
 # Run this locally after setting your DATABASE_URL in .env.local
 npx drizzle-kit push
 ```
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Feel free to open issues for bugs or feature requests.
 
 ---
 

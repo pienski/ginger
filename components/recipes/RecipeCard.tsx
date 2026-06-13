@@ -50,12 +50,21 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
           </div>
         )}
 
-        <div className="mt-auto pt-4 border-t border-gray-100 dark:border-zinc-800/50 text-xs font-medium text-gray-400 dark:text-gray-500 flex justify-between items-center">
-          <span className="flex items-center gap-1">
-            <span className="opacity-60">👥</span> {recipe.servings} servings
-          </span>
+        <div className="mt-auto pt-4 border-t border-gray-100 dark:border-zinc-800/50 text-xs font-medium text-gray-400 dark:text-gray-500 flex justify-between items-center gap-2">
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1">
+              <span className="opacity-60">👥</span> {recipe.servings}
+            </span>
+            <span className="opacity-30">·</span>
+            <span>
+              {recipe.updated_at && Math.abs(new Date(recipe.updated_at).getTime() - new Date(recipe.created_at).getTime()) > 86400000 
+                ? `Edited ${new Date(recipe.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
+                : `Created ${new Date(recipe.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
+              }
+            </span>
+          </div>
           {recipe.last_cooked_at && (
-            <span className="flex items-center gap-1 italic">
+            <span className="flex items-center gap-1 italic shrink-0">
               Last: {new Date(recipe.last_cooked_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
             </span>
           )}
