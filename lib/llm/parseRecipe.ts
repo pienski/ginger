@@ -87,7 +87,7 @@ export async function parseRecipe(text: string) {
       "If no quantity is provided for an ingredient, return '0' as quantity and don't provide any unit" +
       "If the recipe has distinct sections (e.g., 'For the crust', 'For the filling'), set 'use_ingredient_groups' to true and assign the section name to each ingredient's 'group' field. " +
       "If no sections are found, 'use_ingredient_groups' should be false and 'group' should be null or empty. " +
-      "Clean up ingredient names (e.g., '2 cups of sifted flour' -> amount: 2, unit: 'cups', name: 'sifted flour')." +
+      "Clean up ingredient names (e.g., '2 cups of sifted flour' -> amount: 2, unit: 'cups', name: 'sifted flour'). Keep the details in the ingredient name (e.g. 'garlic, crushed' or 'potatoes, cut into 1 cm cubes')" +
       "If the text was provided in Polish - keep the output text in Polish. If in English - keep it in English." +
       "NEVER provide any tags",
     prompt: text,

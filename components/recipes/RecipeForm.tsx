@@ -20,6 +20,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, AlertTriangle, X } from "lucide-react";
 import { getTagStyles, cn, PREDEFINED_UNITS, getPluralizedUnit } from "@/lib/utils";
+import RecipeCreatedCelebration from "./RecipeCreatedCelebration";
 
 type FormIngredient = Ingredient & { id: string };
 type FormGroup = { id: string; name: string; ingredients: FormIngredient[] };
@@ -389,6 +390,7 @@ export default function RecipeForm({
   const [loading, setLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [celebrating, setCelebrating] = useState(false);
 
   // Form State
   const [title, setTitle] = useState(initialData?.title || "");
@@ -892,17 +894,30 @@ export default function RecipeForm({
       if (!res.ok) throw new Error("Failed to save recipe");
 
       const data = await res.json();
-      router.push(`/recipes/${data.id}`);
-      router.refresh();
+
+      if (isEditing) {
+        router.push(`/recipes/${data.id}`);
+        router.refresh();
+        return;
+      }
+
+      // Play the celebration before navigating to the new recipe.
+      setCelebrating(true);
+      router.prefetch(`/recipes/${data.id}`);
+      setTimeout(() => {
+        router.push(`/recipes/${data.id}`);
+        router.refresh();
+      }, 2600);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
       setLoading(false);
     }
   };
 
   return (
     <>
+      {celebrating && <RecipeCreatedCelebration title={title} />}
+
       {error && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div 
