@@ -80,6 +80,8 @@ export const PREDEFINED_UNITS = [
   { singular: "cup", plural: "cups" },
   { singular: "piece", plural: "pieces" },
   { singular: "can", plural: "cans" },
+  { singular: "jar", plural: "jars" },
+  { singular: "handful", plural: "handfuls" },
   { singular: "pkg", plural: "pkg" },
   { singular: "clove", plural: "cloves" },
   { singular: "pinch", plural: "pinches" },

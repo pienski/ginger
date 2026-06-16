@@ -14,6 +14,17 @@ import { Pencil, StickyNote, ArrowLeft, ExternalLink } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({ params }: RecipeDetailPageProps) {
+  const { id } = await params;
+  const recipe = await db.query.recipes.findFirst({
+    where: eq(recipes.id, id),
+  });
+
+  return {
+    title: recipe ? recipe.title : "Recipe Not Found",
+  };
+}
+
 interface RecipeDetailPageProps {
   params: Promise<{
     id: string;

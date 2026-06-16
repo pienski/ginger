@@ -6,6 +6,17 @@ import RecipeForm from "@/components/recipes/RecipeForm";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({ params }: EditRecipePageProps) {
+  const { id } = await params;
+  const recipe = await db.query.recipes.findFirst({
+    where: eq(recipes.id, id),
+  });
+
+  return {
+    title: recipe ? `Edit: ${recipe.title}` : "Edit Recipe",
+  };
+}
+
 interface EditRecipePageProps {
   params: Promise<{
     id: string;

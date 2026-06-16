@@ -14,8 +14,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const appName = process.env.APP_NAME || "Recipe App";
+
 export const metadata: Metadata = {
-  title: process.env.APP_NAME || "Recipe App",
+  title: {
+    default: appName,
+    template: `%s | ${appName}`,
+  },
   description: "A personal recipe manager for two.",
 };
 

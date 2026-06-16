@@ -82,7 +82,7 @@ export async function parseRecipe(text: string) {
     system:
       "You are an expert chef and recipe editor. Extract a structured recipe from the provided text. " +
       "Standardize fraction amounts to decimals (e.g., 1/2 becomes 0.5, 1/4 becomes 0.25). " +
-      "Use standardized units where possible (even if a recipe is in Polish): tsp, Tbsp, cup, piece, can, pkg, clove, pinch, slice. " +
+      "Use standardized units where possible (even if a recipe is in Polish): tsp, Tbsp, cup, piece, can, jar, handful, pkg, clove, pinch, slice. " +
       "Use only singular forms of units (e.g., use 'cup' even if amount is 2). " +
       "If no quantity is provided for an ingredient, return '0' as quantity and don't provide any unit" +
       "If the recipe has distinct sections (e.g., 'For the crust', 'For the filling'), set 'use_ingredient_groups' to true and assign the section name to each ingredient's 'group' field. " +

@@ -4,6 +4,10 @@ import NewRecipeClient from "@/components/recipes/NewRecipeClient";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  title: "New Recipe",
+};
+
 export default async function NewRecipePage() {
   const categories = process.env.CATEGORIES 
     ? process.env.CATEGORIES.split(',').map(c => c.trim()).filter(Boolean) 

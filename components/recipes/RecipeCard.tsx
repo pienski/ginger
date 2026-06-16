@@ -26,7 +26,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
         )}
       </div>
       <div className="p-5 flex flex-col flex-grow">
-        <h2 className="text-xl font-bold mb-3 line-clamp-1 text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight">{recipe.title}</h2>
+        <h2 className="text-xl font-bold mb-3 line-clamp-2 text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight">{recipe.title}</h2>
         
         {recipe.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-5">
