@@ -11,6 +11,9 @@ export default function DirectionSteps({ directions }: DirectionStepsProps) {
   const [checkedSteps, setCheckedSteps] = useState<Set<number>>(new Set());
 
   const toggleStep = (index: number) => {
+    // Don't toggle if the user is selecting text
+    if (window.getSelection()?.toString()) return;
+
     const newChecked = new Set(checkedSteps);
     if (newChecked.has(index)) {
       newChecked.delete(index);
@@ -31,7 +34,7 @@ export default function DirectionSteps({ directions }: DirectionStepsProps) {
             <div
               key={index}
               onClick={() => toggleStep(index)}
-              className={`flex gap-4 cursor-pointer select-none transition-opacity ${
+              className={`flex gap-4 cursor-pointer transition-opacity ${
                 isChecked ? "opacity-30" : "opacity-100"
               }`}
             >

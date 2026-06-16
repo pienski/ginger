@@ -19,6 +19,9 @@ export default function IngredientList({
   const [checkedItems, setCheckedItems] = useState<Set<number>>(new Set());
 
   const toggleItem = (index: number) => {
+    // Don't toggle if the user is selecting text
+    if (window.getSelection()?.toString()) return;
+
     const newChecked = new Set(checkedItems);
     if (newChecked.has(index)) {
       newChecked.delete(index);
@@ -83,7 +86,7 @@ export default function IngredientList({
                     <li
                       key={ing.originalIndex}
                       onClick={() => toggleItem(ing.originalIndex)}
-                      className={`flex items-start gap-3 cursor-pointer select-none transition-opacity ${
+                      className={`flex items-start gap-3 cursor-pointer transition-opacity ${
                         isChecked ? "opacity-30" : "opacity-100"
                       }`}
                     >
@@ -133,7 +136,7 @@ export default function IngredientList({
               <li
                 key={index}
                 onClick={() => toggleItem(index)}
-                className={`flex items-start gap-3 cursor-pointer select-none transition-opacity ${
+                className={`flex items-start gap-3 cursor-pointer transition-opacity ${
                   isChecked ? "opacity-30" : "opacity-100"
                 }`}
               >
