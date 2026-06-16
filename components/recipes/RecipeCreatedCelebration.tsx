@@ -140,11 +140,11 @@ export default function RecipeCreatedCelebration({
         <h2 className="celebration-title text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-5xl">
           Recipe Created!
         </h2>
-        <p className="celebration-subtitle mt-3 flex items-center gap-2 text-lg font-medium text-gray-600 dark:text-gray-300">
+        <p className="celebration-subtitle mt-3 flex items-start justify-center gap-2 text-lg font-medium text-gray-600 dark:text-gray-300">
           {title ? (
             <>
-              <Check size={18} className="text-green-500" />
-              <span className="max-w-xs truncate">
+              <Check size={18} className="mt-1.5 flex-shrink-0 text-green-500" />
+              <span className="max-w-sm sm:max-w-md">
                 &ldquo;{title}&rdquo; is in your cookbook
               </span>
             </>
