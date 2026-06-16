@@ -387,6 +387,11 @@ export default function RecipeForm({
   existingTags,
 }: RecipeFormProps) {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [loading, setLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -539,6 +544,97 @@ export default function RecipeForm({
   const [notes, setNotes] = useState(initialData?.notes || "");
   const [sourceUrl, setSourceUrl] = useState(initialData?.source_url || "");
 
+  // --- Unsaved Changes Protection ---
+  const [isDirty, setIsDirty] = useState(false);
+  const initialFormState = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    const currentState = JSON.stringify({
+      title,
+      description,
+      photoUrl,
+      servings,
+      tags,
+      ingredients,
+      groups,
+      directions,
+      notes,
+      sourceUrl,
+      useIngredientGroups,
+    });
+
+    if (initialFormState.current === null) {
+      initialFormState.current = currentState;
+    } else {
+      setIsDirty(initialFormState.current !== currentState);
+    }
+  }, [
+    title,
+    description,
+    photoUrl,
+    servings,
+    tags,
+    ingredients,
+    groups,
+    directions,
+    notes,
+    sourceUrl,
+    useIngredientGroups,
+    mounted,
+  ]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // If we are celebrating, it means we've successfully saved and are navigating away
+      if (isDirty && !celebrating) {
+        e.preventDefault();
+        e.returnValue = "";
+        return "";
+      }
+    };
+
+    const handleInternalNavigation = (e: MouseEvent) => {
+      if (!isDirty || celebrating) return;
+
+      const target = e.target as HTMLElement;
+      const anchor = target.closest("a");
+
+      if (anchor && anchor instanceof HTMLAnchorElement) {
+        const url = new URL(anchor.href, window.location.origin);
+        const isInternal = url.origin === window.location.origin;
+        const isSamePage = url.pathname === window.location.pathname && url.search === window.location.search;
+
+        if (isInternal && !isSamePage) {
+          if (!window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+          }
+        }
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("click", handleInternalNavigation, true);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("click", handleInternalNavigation, true);
+    };
+  }, [isDirty, celebrating]);
+
+  const handleCancel = () => {
+    if (isDirty) {
+      if (window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
+        router.back();
+      }
+    } else {
+      router.back();
+    }
+  };
+  // ----------------------------------
+
   // Sensors for dnd-kit
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -550,6 +646,14 @@ export default function RecipeForm({
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
+
+  if (!mounted) {
+    return (
+      <div className="max-w-4xl mx-auto py-20 text-center text-gray-500 dark:text-gray-400">
+        Loading form...
+      </div>
+    );
+  }
 
   // Toggle groups handler
   const handleToggleGroups = (val: boolean) => {
@@ -1356,7 +1460,7 @@ export default function RecipeForm({
         </button>
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={handleCancel}
           className="px-8 py-3 border dark:border-zinc-800 rounded-md hover:bg-gray-50 dark:hover:bg-zinc-800 text-gray-700 dark:text-gray-300 transition-colors"
         >
           Cancel

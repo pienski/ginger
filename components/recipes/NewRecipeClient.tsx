@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import RecipeForm from "./RecipeForm";
 import { Recipe } from "@/lib/db/schema";
@@ -19,6 +19,46 @@ export default function NewRecipeClient({ existingTags }: NewRecipeClientProps) 
   const [isParsing, setIsParsing] = useState(false);
   const [parsedData, setParsedData] = useState<Partial<Recipe> | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // --- Unsaved Changes Protection (Import Mode) ---
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (mode === "import" && importText.trim()) {
+        e.preventDefault();
+        e.returnValue = "";
+        return "";
+      }
+    };
+
+    const handleInternalNavigation = (e: MouseEvent) => {
+      if (mode !== "import" || !importText.trim()) return;
+
+      const target = e.target as HTMLElement;
+      const anchor = target.closest("a");
+
+      if (anchor && anchor instanceof HTMLAnchorElement) {
+        const url = new URL(anchor.href, window.location.origin);
+        const isInternal = url.origin === window.location.origin;
+        const isSamePage = url.pathname === window.location.pathname && url.search === window.location.search;
+
+        if (isInternal && !isSamePage) {
+          if (!window.confirm("You have text in the import box. Are you sure you want to leave?")) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+          }
+        }
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("click", handleInternalNavigation, true);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("click", handleInternalNavigation, true);
+    };
+  }, [mode, importText]);
+  // ------------------------------------------------
 
   const handleParse = async () => {
     if (!importText.trim()) return;
@@ -44,6 +84,16 @@ export default function NewRecipeClient({ existingTags }: NewRecipeClientProps) 
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setIsParsing(false);
+    }
+  };
+
+  const handleCancelImport = () => {
+    if (importText.trim()) {
+      if (window.confirm("You have text in the import box. Are you sure you want to discard it and use the manual form?")) {
+        setMode("manual");
+      }
+    } else {
+      setMode("manual");
     }
   };
 
@@ -91,7 +141,7 @@ export default function NewRecipeClient({ existingTags }: NewRecipeClientProps) 
               )}
             </button>
             <button
-              onClick={() => setMode("manual")}
+              onClick={handleCancelImport}
               disabled={isParsing}
               className="px-8 py-4 border dark:border-zinc-800 rounded-md hover:bg-gray-50 dark:hover:bg-zinc-800 text-gray-700 dark:text-gray-300 transition-colors"
             >
