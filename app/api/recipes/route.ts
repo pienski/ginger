@@ -13,7 +13,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { title, description, photo_url, tags, servings, ingredients, use_ingredient_groups, directions, notes, source_url } = body;
+    const { title, description, photo_url, photo_position, tags, servings, ingredients, use_ingredient_groups, directions, notes, source_url } = body;
 
     if (!title || !servings || !ingredients || !directions) {
       return new NextResponse("Missing required fields", { status: 400 });
@@ -23,6 +23,7 @@ export async function POST(request: Request) {
       title,
       description,
       photo_url,
+      photo_position,
       tags: tags || [],
       servings: Number(servings),
       ingredients,

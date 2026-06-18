@@ -18,13 +18,144 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, AlertTriangle, X } from "lucide-react";
+import { GripVertical, AlertTriangle, X, Move } from "lucide-react";
 import { getTagStyles, cn, PREDEFINED_UNITS, getPluralizedUnit } from "@/lib/utils";
 import RecipeCreatedCelebration from "./RecipeCreatedCelebration";
 
 type FormIngredient = Ingredient & { id: string };
 type FormGroup = { id: string; name: string; ingredients: FormIngredient[] };
 type DirectionItem = { id: string; text: string };
+
+// Drag-to-reposition focal point for the recipe photo. Stores a CSS
+// object-position string ("50% 50%") that is applied wherever the photo is
+// shown with object-cover (detail view, cards).
+function PhotoRepositioner({
+  src,
+  position,
+  onChange,
+  onRemove,
+}: {
+  src: string;
+  position: string;
+  onChange: (pos: string) => void;
+  onRemove: () => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const naturalRef = useRef<{ w: number; h: number } | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const [canReposition, setCanReposition] = useState(false);
+
+  const parsePos = (p: string) => {
+    const [x, y] = (p || "50% 50%").split(" ");
+    return { x: parseFloat(x) || 50, y: parseFloat(y) || 50 };
+  };
+  const clamp = (n: number) => Math.min(100, Math.max(0, n));
+
+  // Overflow (in px) of the cover-scaled image beyond the container, per axis.
+  const overflow = () => {
+    const c = containerRef.current;
+    const nat = naturalRef.current;
+    if (!c || !nat) return { ox: 0, oy: 0 };
+    const scale = Math.max(c.clientWidth / nat.w, c.clientHeight / nat.h);
+    return {
+      ox: nat.w * scale - c.clientWidth,
+      oy: nat.h * scale - c.clientHeight,
+    };
+  };
+
+  const refreshCanReposition = () => {
+    const { ox, oy } = overflow();
+    setCanReposition(ox > 1 || oy > 1);
+  };
+
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    naturalRef.current = { w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight };
+    refreshCanReposition();
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const { ox, oy } = overflow();
+    if (ox <= 1 && oy <= 1) return; // nothing croppable to move
+
+    e.preventDefault();
+    const start = parsePos(position);
+    const startX = e.clientX;
+    const startY = e.clientY;
+    setDragging(true);
+
+    // 1px of pointer movement == 1px of image movement (accurate for object-cover).
+    const move = (ev: PointerEvent) => {
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      const nx = ox > 1 ? clamp(start.x - (dx / ox) * 100) : start.x;
+      const ny = oy > 1 ? clamp(start.y - (dy / oy) * 100) : start.y;
+      onChange(`${Math.round(nx)}% ${Math.round(ny)}%`);
+    };
+    const up = () => {
+      setDragging(false);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+
+  return (
+    <div className="mt-2 space-y-1.5">
+      <div
+        ref={containerRef}
+        onPointerDown={handlePointerDown}
+        style={{ touchAction: canReposition ? "none" : "auto" }}
+        className={cn(
+          "relative w-full aspect-[4/3] overflow-hidden rounded-md border dark:border-zinc-800 group select-none",
+          canReposition ? (dragging ? "cursor-grabbing" : "cursor-grab") : "cursor-default",
+        )}
+      >
+        <img
+          src={src}
+          alt="Recipe preview"
+          onLoad={handleImageLoad}
+          draggable={false}
+          style={{ objectPosition: position }}
+          className="w-full h-full object-cover pointer-events-none"
+        />
+
+        {canReposition && !dragging && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors pointer-events-none">
+            <span className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 bg-black/60 text-white text-xs font-medium px-2.5 py-1 rounded-full">
+              <Move size={13} /> Drag to reposition
+            </span>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={onRemove}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+          title="Remove photo"
+        >
+          <X size={12} />
+        </button>
+      </div>
+
+      {canReposition && (
+        <div className="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
+          <span>Drag the image to choose the focal point.</span>
+          {position !== "50% 50%" && (
+            <button
+              type="button"
+              onClick={() => onChange("50% 50%")}
+              className="text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface RecipeFormProps {
   initialData?: Partial<Recipe>;
@@ -403,6 +534,9 @@ export default function RecipeForm({
     initialData?.description || "",
   );
   const [photoUrl, setPhotoUrl] = useState(initialData?.photo_url || "");
+  const [photoPosition, setPhotoPosition] = useState(
+    initialData?.photo_position || "50% 50%",
+  );
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -427,6 +561,7 @@ export default function RecipeForm({
 
       const blob = await response.json();
       setPhotoUrl(blob.url);
+      setPhotoPosition("50% 50%"); // new image: reset focal point to center
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to upload image");
     } finally {
@@ -555,6 +690,7 @@ export default function RecipeForm({
       title,
       description,
       photoUrl,
+      photoPosition,
       servings,
       tags,
       ingredients,
@@ -574,6 +710,7 @@ export default function RecipeForm({
     title,
     description,
     photoUrl,
+    photoPosition,
     servings,
     tags,
     ingredients,
@@ -974,6 +1111,7 @@ export default function RecipeForm({
       title,
       description,
       photo_url: photoUrl,
+      photo_position: photoUrl ? photoPosition : null,
       servings: Number(servings),
       tags,
       ingredients: finalIngredients,
@@ -1125,21 +1263,15 @@ export default function RecipeForm({
                 </div>
               )}
               {photoUrl && (
-                <div className="relative w-full h-32 mt-2 group">
-                  <img
-                    src={photoUrl}
-                    alt="Recipe preview"
-                    className="w-full h-full object-cover rounded-md border dark:border-zinc-800"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setPhotoUrl("")}
-                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Remove photo"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                  </button>
-                </div>
+                <PhotoRepositioner
+                  src={photoUrl}
+                  position={photoPosition}
+                  onChange={setPhotoPosition}
+                  onRemove={() => {
+                    setPhotoUrl("");
+                    setPhotoPosition("50% 50%");
+                  }}
+                />
               )}
             </div>
           </div>

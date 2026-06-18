@@ -54,6 +54,7 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
             <img
               src={recipe.photo_url}
               alt={recipe.title}
+              style={{ objectPosition: recipe.photo_position || "50% 50%" }}
               className="w-full aspect-[4/3] object-cover rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800"
             />
           ) : (

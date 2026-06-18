@@ -15,6 +15,7 @@ export const recipes = pgTable("recipes", {
   title: text("title").notNull(),
   description: text("description"),
   photo_url: text("photo_url"),
+  photo_position: text("photo_position"), // CSS object-position, e.g. "50% 30%" (focal point)
   tags: jsonb("tags").$type<string[]>().notNull().default([]),
   servings: integer("servings").notNull(),
   ingredients: jsonb("ingredients").$type<Ingredient[]>().notNull(),

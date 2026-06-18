@@ -12,11 +12,12 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
       href={`/recipes/${recipe.id}`}
       className="group border border-gray-200 dark:border-zinc-800 rounded-xl overflow-hidden hover:shadow-lg transition-all bg-white dark:bg-zinc-900 flex flex-col h-full shadow-sm"
     >
-      <div className="relative h-48 w-full bg-gray-50 dark:bg-zinc-800/50 overflow-hidden">
+      <div className="relative aspect-[4/3] w-full bg-gray-50 dark:bg-zinc-800/50 overflow-hidden">
         {recipe.photo_url ? (
           <img
             src={recipe.photo_url}
             alt={recipe.title}
+            style={{ objectPosition: recipe.photo_position || "50% 50%" }}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (

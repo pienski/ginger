@@ -40,6 +40,7 @@ export async function getRecipes({
       title: recipes.title,
       description: recipes.description,
       photo_url: recipes.photo_url,
+      photo_position: recipes.photo_position,
       tags: recipes.tags,
       servings: recipes.servings,
       ingredients: recipes.ingredients,
