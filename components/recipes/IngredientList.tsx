@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { Ingredient } from "@/lib/db/schema";
 import { formatAmount, formatMetricAmount, getPluralizedUnit } from "@/lib/utils";
 
@@ -99,7 +100,7 @@ export default function IngredientList({
                           </svg>
                         )}
                       </div>
-                      <div className={`text-base leading-snug ${isChecked ? "line-through text-gray-500 dark:text-gray-400" : "text-gray-800 dark:text-gray-200"}`}>
+                      <div className={`text-base leading-snug markdown-content ${isChecked ? "line-through text-gray-500 dark:text-gray-400" : "text-gray-800 dark:text-gray-200"}`}>
                         {scaledAmount > 0 && (
                           <>
                             <span className="font-bold text-gray-900 dark:text-gray-100">
@@ -114,7 +115,9 @@ export default function IngredientList({
                             {" "}
                           </>
                         )}
-                        {ing.name}
+                        <ReactMarkdown components={{ p: ({ children }) => <>{children}</> }}>
+                          {ing.name}
+                        </ReactMarkdown>
                       </div>
                     </li>
                   );
@@ -149,7 +152,7 @@ export default function IngredientList({
                     </svg>
                   )}
                 </div>
-                <div className={`text-base leading-snug ${isChecked ? "line-through text-gray-500 dark:text-gray-400" : "text-gray-800 dark:text-gray-200"}`}>
+                <div className={`text-base leading-snug markdown-content ${isChecked ? "line-through text-gray-500 dark:text-gray-400" : "text-gray-800 dark:text-gray-200"}`}>
                   {scaledAmount > 0 && (
                     <>
                       <span className="font-bold text-gray-900 dark:text-gray-100">
@@ -164,7 +167,9 @@ export default function IngredientList({
                       {" "}
                     </>
                   )}
-                  {ing.name}
+                  <ReactMarkdown components={{ p: ({ children }) => <>{children}</> }}>
+                    {ing.name}
+                  </ReactMarkdown>
                 </div>
               </li>
             );
