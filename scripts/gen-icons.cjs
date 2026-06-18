@@ -1,11 +1,29 @@
 // One-off icon generator. Run: node scripts/gen-icons.cjs
+// Source is the user's original 256x256 favicon (recovered from git), so the
+// existing artwork/framing is preserved — we only downscale and add sizes.
 const sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
 
-const SRC = path.join(__dirname, "..", "app", "assets", "cat_chef.png");
 const APP = path.join(__dirname, "..", "app");
 const opts = { fit: "cover", position: "centre" };
+
+// Extract the largest embedded PNG from the original .ico to use as the source.
+function pngFromIco(icoPath) {
+  const buf = fs.readFileSync(icoPath);
+  const count = buf.readUInt16LE(4);
+  let best = null;
+  for (let i = 0; i < count; i++) {
+    const e = 6 + i * 16;
+    const size = buf.readUInt32LE(e + 8);
+    const offset = buf.readUInt32LE(e + 12);
+    const dim = buf.readUInt8(e) || 256;
+    if (!best || dim > best.dim) best = { dim, data: buf.subarray(offset, offset + size) };
+  }
+  return best.data;
+}
+
+const SRC = pngFromIco(path.join(__dirname, "source-favicon.ico"));
 
 const square = (size) =>
   sharp(SRC).resize(size, size, opts).png({ compressionLevel: 9 }).toBuffer();
