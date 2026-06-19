@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { Recipe } from "@/lib/db/schema";
 import { getTagStyles, cn } from "@/lib/utils";
+import { formatDayMonth } from "@/lib/dates";
 
 interface RecipeCardProps {
-  recipe: Recipe & { last_cooked_at: Date | null };
+  recipe: Recipe & { last_cooked_at: string | null };
 }
 
 export default function RecipeCard({ recipe }: RecipeCardProps) {
@@ -66,7 +67,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
           </div>
           {recipe.last_cooked_at && (
             <span className="flex items-center gap-1 italic shrink-0">
-              Last: {new Date(recipe.last_cooked_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+              Last: {formatDayMonth(recipe.last_cooked_at)}
             </span>
           )}
         </div>

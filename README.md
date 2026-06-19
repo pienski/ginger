@@ -15,10 +15,10 @@ A modern, minimalist recipe manager and meal planner built for families and coup
 - **Smart Tagging**: Organize recipes with a flexible tagging system and a color-coded UI.
 - **Recipe Search & Filter**: Quickly find what you need by title, tags, or sort by recently added/cooked.
 - **Image Uploads**: Direct integration with Vercel Blob for hosting your own food photos.
+- **Weekly Meal Planner**: A Monday–Sunday calendar (days × meal categories) for assigning a recipe to each day's meals. Navigate freely between weeks — past weeks double as your meal history, since assigning a meal *is* the record.
+- **Smart Meal Suggestions**: When filling a slot, get ranked recipe suggestions that prioritize meals you haven't eaten recently while boosting your frequently-cooked favorites. Never-tried recipes surface too, and the picker filters to the slot's category with a "show all" toggle.
 
 ### 🗺️ Roadmap (Upcoming)
-- **Meal History**: Log when you cook a recipe to see what you haven't made in a while.
-- **Smart Suggestions**: Get recommendations for your next meal based on history and "last cooked" weight.
 - **Grocery List Builder**: Aggregate ingredients from multiple recipes into a categorized shopping list.
 
 ---

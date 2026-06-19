@@ -3,8 +3,8 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { recipes } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { recipes, mealPlan } from "@/lib/db/schema";
+import { eq, sql } from "drizzle-orm";
 import IngredientList from "@/components/recipes/IngredientList";
 import DirectionSteps from "@/components/recipes/DirectionSteps";
 import DeleteButton from "@/components/recipes/DeleteButton";
@@ -45,8 +45,25 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
     notFound();
   }
 
+  // Most recent date this recipe appears in the meal plan (= last cooked).
+  const [lastCookedRow] = await db
+    .select({ date: sql<string | null>`max(${mealPlan.date})` })
+    .from(mealPlan)
+    .where(eq(mealPlan.recipe_id, id));
+  // Build a local Date from the 'YYYY-MM-DD' string to avoid UTC day-shift.
+  const lastCooked = lastCookedRow?.date
+    ? new Date(`${lastCookedRow.date}T00:00:00`)
+    : null;
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <Link
+        href="/recipes"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors mb-6"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back to recipes
+      </Link>
+
       <div className="flex flex-col md:flex-row gap-6 mb-8">
         {/* Left column: Photo (or placeholder) */}
         <div className="w-full md:w-64 lg:w-80 shrink-0">
@@ -143,13 +160,20 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
                   </span>
                 </>
               )}
-              <span>·</span>
-              <Link
-                href="/recipes"
-                className="flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:underline"
-              >
-                <ArrowLeft className="w-3 h-3" /> Back to list
-              </Link>
+              {lastCooked && (
+                <>
+                  <span>·</span>
+                  <span className="italic">
+                    Last cooked{" "}
+                    <span className="hidden sm:inline">
+                      {lastCooked.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
+                    </span>
+                    <span className="sm:hidden">
+                      {lastCooked.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                    </span>
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>

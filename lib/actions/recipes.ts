@@ -1,10 +1,11 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { recipes, mealHistory, Recipe } from "@/lib/db/schema";
+import { recipes, mealPlan, Recipe } from "@/lib/db/schema";
 import { desc, asc, eq, sql, and, ilike } from "drizzle-orm";
 
-export type RecipeWithLastCooked = Recipe & { last_cooked_at: Date | null };
+// last_cooked_at is the max meal_plan.date ('YYYY-MM-DD' string), not a Date.
+export type RecipeWithLastCooked = Recipe & { last_cooked_at: string | null };
 
 export type SortOption = "recently_added" | "recently_cooked" | "alphabetical";
 
@@ -50,18 +51,18 @@ export async function getRecipes({
       source_url: recipes.source_url,
       created_at: recipes.created_at,
       updated_at: recipes.updated_at,
-      last_cooked_at: sql<Date | null>`max(${mealHistory.cooked_at})`,
+      last_cooked_at: sql<string | null>`max(${mealPlan.date})`,
     })
     .from(recipes)
-    .leftJoin(mealHistory, eq(recipes.id, mealHistory.recipe_id))
+    .leftJoin(mealPlan, eq(recipes.id, mealPlan.recipe_id))
     .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
     .groupBy(recipes.id);
 
   if (sortBy === "recently_added") {
     query.orderBy(desc(recipes.created_at));
   } else if (sortBy === "recently_cooked") {
-    // Sort by max(cooked_at) descending, with nulls last
-    query.orderBy(sql`max(${mealHistory.cooked_at}) DESC NULLS LAST`);
+    // Sort by most recently eaten (max meal_plan.date) descending, with nulls last
+    query.orderBy(sql`max(${mealPlan.date}) DESC NULLS LAST`);
   } else if (sortBy === "alphabetical") {
     query.orderBy(asc(recipes.title));
   }

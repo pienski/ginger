@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp, jsonb, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, jsonb, boolean, date, unique } from "drizzle-orm/pg-core";
 import { createId } from "@paralleldrive/cuid2";
 
 export type Ingredient = {
@@ -27,16 +27,23 @@ export const recipes = pgTable("recipes", {
   updated_at: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const mealHistory = pgTable("meal_history", {
-  id: text("id").primaryKey().$defaultFn(() => createId()),
-  recipe_id: text("recipe_id")
-    .notNull()
-    .references(() => recipes.id, { onDelete: "cascade" }),
-  cooked_at: timestamp("cooked_at").notNull(),
-  notes: text("notes"),
-});
+// A planned/eaten meal slot. Assigning a recipe to a (date, category) cell in the
+// calendar IS the permanent record — past weeks constitute the meal history.
+export const mealPlan = pgTable(
+  "meal_plan",
+  {
+    id: text("id").primaryKey().$defaultFn(() => createId()),
+    date: date("date", { mode: "string" }).notNull(), // 'YYYY-MM-DD'
+    category: text("category").notNull(), // one of CATEGORIES env values
+    recipe_id: text("recipe_id")
+      .notNull()
+      .references(() => recipes.id, { onDelete: "cascade" }),
+    created_at: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [unique("meal_plan_date_category_unique").on(t.date, t.category)],
+);
 
 export type Recipe = typeof recipes.$inferSelect;
 export type NewRecipe = typeof recipes.$inferInsert;
-export type MealHistory = typeof mealHistory.$inferSelect;
-export type NewMealHistory = typeof mealHistory.$inferInsert;
+export type MealPlan = typeof mealPlan.$inferSelect;
+export type NewMealPlan = typeof mealPlan.$inferInsert;
