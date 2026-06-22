@@ -21,42 +21,62 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { date, category, recipe_id } = await request.json();
+    const body = await request.json();
+    const { category } = body;
 
-    if (!date || !DATE_RE.test(date)) {
-      return new NextResponse("Invalid or missing date", { status: 400 });
+    // Accept either a single `date` or a batch `dates: string[]` — one recipe
+    // dropped into several days of the same category at once.
+    const rawDates: unknown = body.dates ?? body.date;
+    const dates = [
+      ...new Set(
+        (Array.isArray(rawDates) ? rawDates : [rawDates]).filter(
+          (d): d is string => typeof d === "string",
+        ),
+      ),
+    ];
+
+    if (dates.length === 0 || !dates.every((d) => DATE_RE.test(d))) {
+      return new NextResponse("Invalid or missing date(s)", { status: 400 });
     }
     if (!category || !getCategories().includes(category)) {
       return new NextResponse("Invalid or missing category", { status: 400 });
     }
-    if (!recipe_id) {
+    // `recipe_id: null` is a deliberate "No meal" slot; an absent key is a bad request.
+    if (!("recipe_id" in body)) {
       return new NextResponse("Missing recipe_id", { status: 400 });
     }
+    const recipe_id: string | null = body.recipe_id ?? null;
 
-    const recipe = await db.query.recipes.findFirst({
-      where: eq(recipes.id, recipe_id),
-      columns: { id: true, title: true, photo_url: true, photo_position: true },
-    });
-    if (!recipe) {
+    // Look up the recipe only for real assignments (skip the lookup for "No meal").
+    const recipe = recipe_id
+      ? await db.query.recipes.findFirst({
+          where: eq(recipes.id, recipe_id),
+          columns: { id: true, title: true, photo_url: true, photo_position: true },
+        })
+      : null;
+    if (recipe_id && !recipe) {
       return new NextResponse("Recipe not found", { status: 400 });
     }
 
+    // One upsert covering every target cell; the unique (date, category) index
+    // means re-assigning an occupied slot just overwrites it.
     await db
       .insert(mealPlan)
-      .values({ date, category, recipe_id })
+      .values(dates.map((date) => ({ date, category, recipe_id })))
       .onConflictDoUpdate({
         target: [mealPlan.date, mealPlan.category],
         set: { recipe_id },
       });
 
-    // Return the joined shape the calendar cell needs for an optimistic update.
+    // Return the joined shape the calendar cells need for an optimistic update
+    // (nulls for a "No meal" slot).
     return NextResponse.json({
-      date,
+      dates,
       category,
       recipe_id,
-      title: recipe.title,
-      photo_url: recipe.photo_url,
-      photo_position: recipe.photo_position,
+      title: recipe?.title ?? null,
+      photo_url: recipe?.photo_url ?? null,
+      photo_position: recipe?.photo_position ?? null,
     });
   } catch (error) {
     console.error("Failed to save meal plan slot:", error);

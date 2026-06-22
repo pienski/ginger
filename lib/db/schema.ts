@@ -35,9 +35,10 @@ export const mealPlan = pgTable(
     id: text("id").primaryKey().$defaultFn(() => createId()),
     date: date("date", { mode: "string" }).notNull(), // 'YYYY-MM-DD'
     category: text("category").notNull(), // one of CATEGORIES env values
-    recipe_id: text("recipe_id")
-      .notNull()
-      .references(() => recipes.id, { onDelete: "cascade" }),
+    // null = a deliberate "No meal" slot (distinct from an empty/undecided cell)
+    recipe_id: text("recipe_id").references(() => recipes.id, {
+      onDelete: "cascade",
+    }),
     created_at: timestamp("created_at").notNull().defaultNow(),
   },
   (t) => [unique("meal_plan_date_category_unique").on(t.date, t.category)],

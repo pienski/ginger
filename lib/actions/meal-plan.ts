@@ -17,8 +17,8 @@ const SUGGESTION_LIMIT = 12;
 export interface PlannedMeal {
   date: string; // 'YYYY-MM-DD'
   category: string;
-  recipe_id: string;
-  title: string;
+  recipe_id: string | null; // null = deliberate "No meal" slot
+  title: string | null; // null for a "No meal" slot
   photo_url: string | null;
   photo_position: string | null;
 }
@@ -40,7 +40,8 @@ export async function getWeekPlan(mondayISO: string): Promise<WeekPlan> {
       photo_position: recipes.photo_position,
     })
     .from(mealPlan)
-    .innerJoin(recipes, eq(mealPlan.recipe_id, recipes.id))
+    // Left join: "No meal" rows have a null recipe_id and no matching recipe.
+    .leftJoin(recipes, eq(mealPlan.recipe_id, recipes.id))
     .where(and(gte(mealPlan.date, mondayISO), lte(mealPlan.date, sunday)));
 
   const plan: WeekPlan = {};

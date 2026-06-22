@@ -3,11 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Pencil, Plus, X } from "lucide-react";
+import { Ban, ChevronLeft, ChevronRight, Copy, Pencil, Plus, X } from "lucide-react";
 import { addWeeks, getWeekDates, getWeekStart, getTodayISO } from "@/lib/dates";
 import { cn, getTagStyles } from "@/lib/utils";
 import type { PlannedMeal, WeekPlan } from "@/lib/actions/meal-plan";
-import RecipePickerModal, { type PickerItem } from "./RecipePickerModal";
+import RecipePickerModal, {
+  type PickerItem,
+  NO_MEAL_ID,
+  NO_MEAL_ITEM,
+} from "./RecipePickerModal";
 
 interface MealPlanCalendarProps {
   weekStart: string; // Monday 'YYYY-MM-DD'
@@ -16,11 +20,10 @@ interface MealPlanCalendarProps {
   plan: WeekPlan;
 }
 
-interface SlotRef {
-  date: string;
-  label: string;
-  dayName: string;
+interface PickerState {
+  date: string; // the clicked cell (pre-selected day)
   category: string;
+  presetRecipe?: PickerItem; // "Repeat" mode: recipe chosen, only pick days
 }
 
 const slotKey = (date: string, category: string) => `${date}|${category}`;
@@ -33,7 +36,7 @@ export default function MealPlanCalendar({
 }: MealPlanCalendarProps) {
   const router = useRouter();
   const [plan, setPlan] = useState<WeekPlan>(initialPlan);
-  const [picker, setPicker] = useState<SlotRef | null>(null);
+  const [picker, setPicker] = useState<PickerState | null>(null);
   const [todayISO, setTodayISO] = useState<string | null>(null);
 
   const days = useMemo(() => getWeekDates(weekStart), [weekStart]);
@@ -55,47 +58,93 @@ export default function MealPlanCalendar({
 
   const goToWeek = (iso: string) => router.push(`/plan?week=${iso}`);
 
-  const assignRecipe = async (slot: SlotRef, recipe: PickerItem) => {
-    const key = slotKey(slot.date, slot.category);
-    const previous = plan[key];
-    const optimistic: PlannedMeal = {
-      date: slot.date,
-      category: slot.category,
-      recipe_id: recipe.id,
-      title: recipe.title,
-      photo_url: recipe.photo_url,
-      photo_position: recipe.photo_position,
-    };
-    setPlan((p) => ({ ...p, [key]: optimistic }));
+  // date -> existing recipe title, for one category across the visible week.
+  const occupiedFor = (category: string): Record<string, string> => {
+    const map: Record<string, string> = {};
+    for (const day of days) {
+      const meal = plan[slotKey(day.date, category)];
+      if (meal) map[day.date] = meal.title ?? "No meal";
+    }
+    return map;
+  };
+
+  const openPick = (date: string, category: string) => setPicker({ date, category });
+
+  // "Repeat" a filled cell: open the picker with its recipe preset, day-step first.
+  const openRepeat = (date: string, category: string) => {
+    const meal = plan[slotKey(date, category)];
+    if (!meal) return;
+    setPicker({
+      date,
+      category,
+      presetRecipe:
+        meal.recipe_id === null
+          ? NO_MEAL_ITEM
+          : {
+              id: meal.recipe_id,
+              title: meal.title ?? "",
+              photo_url: meal.photo_url,
+              photo_position: meal.photo_position,
+              tags: [],
+              last_eaten: null,
+            },
+    });
+  };
+
+  // Assign one recipe to a whole set of (date, category) cells at once.
+  const assignRecipeToDates = async (
+    category: string,
+    recipe: PickerItem,
+    dates: string[],
+  ) => {
+    if (dates.length === 0) return;
     setPicker(null);
+
+    const isNoMeal = recipe.id === NO_MEAL_ID;
+    const recipeId = isNoMeal ? null : recipe.id;
+    const keys = dates.map((d) => slotKey(d, category));
+    const previous = keys.map((k) => plan[k]); // snapshot for rollback
+
+    setPlan((p) => {
+      const next = { ...p };
+      for (const date of dates) {
+        next[slotKey(date, category)] = {
+          date,
+          category,
+          recipe_id: recipeId,
+          title: isNoMeal ? null : recipe.title,
+          photo_url: isNoMeal ? null : recipe.photo_url,
+          photo_position: isNoMeal ? null : recipe.photo_position,
+        };
+      }
+      return next;
+    });
 
     try {
       const res = await fetch("/api/meal-plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          date: slot.date,
-          category: slot.category,
-          recipe_id: recipe.id,
-        }),
+        body: JSON.stringify({ dates, category, recipe_id: recipeId }),
       });
       if (!res.ok) throw new Error(await res.text());
       router.refresh();
     } catch (error) {
-      console.error("Failed to assign meal:", error);
-      // Roll back to the previous cell value.
+      console.error("Failed to assign meals:", error);
       setPlan((p) => {
         const next = { ...p };
-        if (previous) next[key] = previous;
-        else delete next[key];
+        keys.forEach((k, i) => {
+          const prev = previous[i];
+          if (prev) next[k] = prev;
+          else delete next[k];
+        });
         return next;
       });
       alert("Couldn't save that meal. Please try again.");
     }
   };
 
-  const removeRecipe = async (slot: SlotRef) => {
-    const key = slotKey(slot.date, slot.category);
+  const removeRecipe = async (date: string, category: string) => {
+    const key = slotKey(date, category);
     const previous = plan[key];
     if (!previous) return;
     setPlan((p) => {
@@ -106,7 +155,7 @@ export default function MealPlanCalendar({
 
     try {
       const res = await fetch(
-        `/api/meal-plan?date=${slot.date}&category=${encodeURIComponent(slot.category)}`,
+        `/api/meal-plan?date=${date}&category=${encodeURIComponent(category)}`,
         { method: "DELETE" },
       );
       if (!res.ok) throw new Error(await res.text());
@@ -185,12 +234,9 @@ export default function MealPlanCalendar({
             categories={categories}
             plan={plan}
             isToday={day.date === todayISO}
-            onPick={(category) =>
-              setPicker({ date: day.date, label: day.label, dayName: day.dayName, category })
-            }
-            onRemove={(category) =>
-              removeRecipe({ date: day.date, label: day.label, dayName: day.dayName, category })
-            }
+            onPick={(category) => openPick(day.date, category)}
+            onRepeat={(category) => openRepeat(day.date, category)}
+            onRemove={(category) => removeRecipe(day.date, category)}
           />
         ))}
       </div>
@@ -222,22 +268,9 @@ export default function MealPlanCalendar({
                   </div>
                   <Cell
                     meal={plan[slotKey(day.date, category)]}
-                    onPick={() =>
-                      setPicker({
-                        date: day.date,
-                        label: day.label,
-                        dayName: day.dayName,
-                        category,
-                      })
-                    }
-                    onRemove={() =>
-                      removeRecipe({
-                        date: day.date,
-                        label: day.label,
-                        dayName: day.dayName,
-                        category,
-                      })
-                    }
+                    onPick={() => openPick(day.date, category)}
+                    onRepeat={() => openRepeat(day.date, category)}
+                    onRemove={() => removeRecipe(day.date, category)}
                   />
                 </div>
               ))}
@@ -248,12 +281,15 @@ export default function MealPlanCalendar({
 
       {picker && (
         <RecipePickerModal
-          date={picker.date}
-          dayName={picker.dayName}
-          label={picker.label}
+          weekDays={days}
+          initialDate={picker.date}
           category={picker.category}
+          presetRecipe={picker.presetRecipe}
+          occupied={occupiedFor(picker.category)}
           onClose={() => setPicker(null)}
-          onSelect={(recipe) => assignRecipe(picker, recipe)}
+          onConfirm={(recipe, dates) =>
+            assignRecipeToDates(picker.category, recipe, dates)
+          }
         />
       )}
     </div>
@@ -267,6 +303,7 @@ function FragmentRow({
   plan,
   isToday,
   onPick,
+  onRepeat,
   onRemove,
 }: {
   day: { date: string; dayName: string; label: string };
@@ -274,6 +311,7 @@ function FragmentRow({
   plan: WeekPlan;
   isToday: boolean;
   onPick: (category: string) => void;
+  onRepeat: (category: string) => void;
   onRemove: (category: string) => void;
 }) {
   return (
@@ -294,6 +332,7 @@ function FragmentRow({
           key={category}
           meal={plan[slotKey(day.date, category)]}
           onPick={() => onPick(category)}
+          onRepeat={() => onRepeat(category)}
           onRemove={() => onRemove(category)}
         />
       ))}
@@ -305,10 +344,12 @@ function FragmentRow({
 function Cell({
   meal,
   onPick,
+  onRepeat,
   onRemove,
 }: {
   meal: PlannedMeal | undefined;
   onPick: () => void;
+  onRepeat: () => void;
   onRemove: () => void;
 }) {
   if (!meal) {
@@ -323,6 +364,41 @@ function Cell({
     );
   }
 
+  // Deliberate "No meal" slot — subtle, muted, not a link to a recipe.
+  if (meal.recipe_id === null) {
+    return (
+      <div className="group relative flex items-center gap-2 min-h-[3.5rem] w-full rounded-lg border border-dashed border-gray-200 dark:border-zinc-800 bg-gray-50/60 dark:bg-zinc-900/40 p-1.5">
+        <div className="flex items-center gap-2 flex-1 min-w-0 pl-1.5 text-gray-400 dark:text-gray-500">
+          <Ban className="w-3.5 h-3.5 shrink-0" />
+          <span className="text-xs italic">No meal</span>
+        </div>
+        <div className="flex items-center gap-0.5 shrink-0 self-start opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity">
+          <button
+            onClick={onRepeat}
+            title="Repeat on other days"
+            className="p-1 rounded-md text-gray-400 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+          >
+            <Copy className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={onPick}
+            title="Choose a meal"
+            className="p-1 rounded-md text-gray-400 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={onRemove}
+            title="Clear"
+            className="p-1 rounded-md text-gray-400 hover:text-red-600 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="group relative flex items-center gap-2 min-h-[3.5rem] w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-1.5 hover:border-gray-300 dark:hover:border-zinc-700 hover:shadow-sm transition-all">
       <Link
@@ -334,7 +410,7 @@ function Cell({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={meal.photo_url}
-              alt={meal.title}
+              alt={meal.title ?? ""}
               style={{ objectPosition: meal.photo_position || "50% 50%" }}
               className="w-full h-full object-cover"
             />
@@ -347,6 +423,13 @@ function Cell({
         </span>
       </Link>
       <div className="flex items-center gap-0.5 shrink-0 self-start opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity">
+        <button
+          onClick={onRepeat}
+          title="Repeat on other days"
+          className="p-1 rounded-md text-gray-400 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+        >
+          <Copy className="w-3.5 h-3.5" />
+        </button>
         <button
           onClick={onPick}
           title="Change"
