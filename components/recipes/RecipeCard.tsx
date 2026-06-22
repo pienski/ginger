@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Recipe } from "@/lib/db/schema";
 import { getTagStyles, cn } from "@/lib/utils";
-import { formatDayMonth } from "@/lib/dates";
+import { formatTimeAgo, formatFullDate } from "@/lib/dates";
 
 interface RecipeCardProps {
   recipe: Recipe & { last_cooked_at: string | null };
@@ -66,8 +66,11 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
             </span>
           </div>
           {recipe.last_cooked_at && (
-            <span className="flex items-center gap-1 italic shrink-0">
-              Last: {formatDayMonth(recipe.last_cooked_at)}
+            <span
+              className="flex items-center gap-1 italic shrink-0"
+              title={`Last cooked ${formatFullDate(recipe.last_cooked_at)}`}
+            >
+              Last: {formatTimeAgo(recipe.last_cooked_at)}
             </span>
           )}
         </div>

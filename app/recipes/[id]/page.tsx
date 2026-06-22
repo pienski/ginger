@@ -9,6 +9,7 @@ import IngredientList from "@/components/recipes/IngredientList";
 import DirectionSteps from "@/components/recipes/DirectionSteps";
 import DeleteButton from "@/components/recipes/DeleteButton";
 import { getTagStyles, cn } from "@/lib/utils";
+import { formatTimeAgo, formatFullDate } from "@/lib/dates";
 import ReactMarkdown from "react-markdown";
 import { Pencil, StickyNote, ArrowLeft, ExternalLink } from "lucide-react";
 
@@ -50,10 +51,8 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
     .select({ date: sql<string | null>`max(${mealPlan.date})` })
     .from(mealPlan)
     .where(eq(mealPlan.recipe_id, id));
-  // Build a local Date from the 'YYYY-MM-DD' string to avoid UTC day-shift.
-  const lastCooked = lastCookedRow?.date
-    ? new Date(`${lastCookedRow.date}T00:00:00`)
-    : null;
+  // Keep the raw 'YYYY-MM-DD' string; date helpers parse it without UTC day-shift.
+  const lastCookedIso = lastCookedRow?.date ?? null;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
@@ -160,16 +159,14 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
                   </span>
                 </>
               )}
-              {lastCooked && (
+              {lastCookedIso && (
                 <>
                   <span>·</span>
-                  <span className="italic">
-                    Last cooked{" "}
-                    <span className="hidden sm:inline">
-                      {lastCooked.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
-                    </span>
-                    <span className="sm:hidden">
-                      {lastCooked.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                  <span className="group relative italic cursor-default">
+                    Last cooked {formatTimeAgo(lastCookedIso)}
+                    <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 dark:bg-zinc-700 px-2.5 py-1.5 text-xs font-medium not-italic text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+                      {formatFullDate(lastCookedIso)}
+                      <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-zinc-700" />
                     </span>
                   </span>
                 </>

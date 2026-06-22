@@ -86,3 +86,29 @@ export function formatDayMonth(iso: string): string {
   const [, m, d] = iso.split("-").map(Number);
   return `${d} ${MONTHS_SHORT[m - 1]}`;
 }
+
+/**
+ * Compact, rounded-down "time ago" label for a past 'YYYY-MM-DD' date,
+ * counted from local today. Abbreviated to stay space-frugal in cards/meta rows.
+ * E.g. 'today', '2d ago', '3w ago', '4mo ago', '1y ago'. Rounding is always down
+ * (40 days → '1mo ago'). Buckets switch at 7d → weeks, 30d → months, 365d → years.
+ */
+export function formatTimeAgo(iso: string): string {
+  const days = daysBetween(iso, getTodayISO());
+  if (days <= 0) return "today";
+  if (days < 7) return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days / 7)}w ago`;
+  if (days < 365) return `${Math.floor(days / 30)}mo ago`;
+  return `${Math.floor(days / 365)}y ago`;
+}
+
+/** Render a 'YYYY-MM-DD' string as a full date, e.g. 'Friday, 19 June 2026'. */
+export function formatFullDate(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
