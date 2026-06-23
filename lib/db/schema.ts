@@ -44,7 +44,18 @@ export const mealPlan = pgTable(
   (t) => [unique("meal_plan_date_category_unique").on(t.date, t.category)],
 );
 
+// Free-form notes (Notion-style). `content` holds Tiptap-produced HTML.
+export const notes = pgTable("notes", {
+  id: text("id").primaryKey().$defaultFn(() => createId()),
+  title: text("title").notNull().default("Untitled"),
+  content: text("content").notNull().default(""), // Tiptap HTML
+  created_at: timestamp("created_at").notNull().defaultNow(),
+  updated_at: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export type Recipe = typeof recipes.$inferSelect;
 export type NewRecipe = typeof recipes.$inferInsert;
 export type MealPlan = typeof mealPlan.$inferSelect;
 export type NewMealPlan = typeof mealPlan.$inferInsert;
+export type Note = typeof notes.$inferSelect;
+export type NewNote = typeof notes.$inferInsert;
