@@ -1,6 +1,12 @@
+<div align="center">
+
+<img src="app/assets/new_favicon.png" alt="Recipe Book icon" width="96" height="96" />
+
 # Recipe Book
 
 A modern, minimalist recipe manager and meal planner built for families and couples. Originally designed to replace a Notion-based recipe store, this app focuses on a clean cooking experience, smart scaling, and effortless recipe importing using AI.
+
+</div>
 
 ---
 
