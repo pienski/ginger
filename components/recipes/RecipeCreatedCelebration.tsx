@@ -1,9 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import Image from "next/image";
 import { Check, Sparkles } from "lucide-react";
-import catChef from "@/app/assets/cat_chef.png";
+import spriteSheet from "@/app/assets/sprite_sheet.png";
 
 interface RecipeCreatedCelebrationProps {
   title?: string;
@@ -154,25 +153,19 @@ export default function RecipeCreatedCelebration({
         </p>
       </div>
 
-      {/* Peeking chef cat */}
+      {/* Chef cat jumping up from the bottom of the page (sprite-sheet animation) */}
       <div className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2">
         <div className="celebration-cat">
-          <div className="celebration-cat-idle">
-            <Image
-              src={catChef}
-              alt=""
-              priority
-              className="w-80 sm:w-[28rem] h-auto select-none"
-              style={{
-                // Feather the edges so the image's white background melts
-                // into the backdrop instead of showing a hard rectangle.
-                maskImage:
-                  "radial-gradient(ellipse 72% 70% at 50% 42%, #000 55%, transparent 100%)",
-                WebkitMaskImage:
-                  "radial-gradient(ellipse 72% 70% at 50% 42%, #000 55%, transparent 100%)",
-              }}
-            />
-          </div>
+          <div
+            className="celebration-cat-sprite w-80 h-80 sm:w-[28rem] sm:h-[28rem] select-none"
+            style={{
+              backgroundImage: `url(${spriteSheet.src})`,
+              // Each frame leaves ~25% transparent space below the cat's feet;
+              // nudge down so the feet rest at the bottom edge of the page and the
+              // jump visibly lifts off it.
+              transform: "translateY(25%)",
+            }}
+          />
         </div>
       </div>
     </div>

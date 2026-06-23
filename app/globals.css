@@ -74,12 +74,17 @@ body {
   100% { transform: translateY(0); opacity: 1; }
 }
 
-@keyframes celebration-cat-idle {
-  0% { transform: translateY(0) rotate(0deg); animation-timing-function: ease-out; }
-  25% { transform: translateY(-8px) rotate(8deg); animation-timing-function: ease-in; }
-  50% { transform: translateY(0) rotate(0deg); animation-timing-function: ease-out; }
-  75% { transform: translateY(-8px) rotate(-8deg); animation-timing-function: ease-in; }
-  100% { transform: translateY(0) rotate(0deg); }
+/* Sprite-sheet jump: 5 columns x 8 rows = 40 frames, row-major. With
+   background-size:500% 800%, stepping background-position 0%->100% with
+   steps(N, jump-none) lands exactly on each column / row (both use the same
+   1/(N-1) spacing), so no per-frame keyframes are needed. */
+@keyframes celebration-cat-jump-col {
+  from { background-position-x: 0%; }
+  to { background-position-x: 100%; }
+}
+@keyframes celebration-cat-jump-row {
+  from { background-position-y: 0%; }
+  to { background-position-y: 100%; }
 }
 
 .celebration-backdrop {
@@ -112,11 +117,16 @@ body {
   animation: celebration-sparkle 1.4s ease-in-out var(--sdelay) infinite;
 }
 .celebration-cat {
-  animation: celebration-cat-peek 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.9s both;
+  animation: celebration-cat-peek 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s both;
 }
-.celebration-cat-idle {
-  transform-origin: bottom center;
-  animation: celebration-cat-idle 1.2s linear 0.9s infinite;
+.celebration-cat-sprite {
+  background-repeat: no-repeat;
+  background-size: 500% 800%; /* 5 frame-widths x 8 frame-heights */
+  /* The column sweep loops 8x while the row advances once, playing the full
+     40-frame jump in 2.8s (~14fps). Delayed to begin as the cat rises into view. */
+  animation:
+    celebration-cat-jump-col 0.35s steps(5, jump-none) 0.6s infinite,
+    celebration-cat-jump-row 2.8s steps(8, jump-none) 0.6s infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -129,7 +139,7 @@ body {
   .celebration-confetti,
   .celebration-sparkle,
   .celebration-cat,
-  .celebration-cat-idle {
+  .celebration-cat-sprite {
     animation-duration: 0.01ms;
     animation-iteration-count: 1;
   }
