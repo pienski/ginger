@@ -1205,7 +1205,7 @@ export default function RecipeForm({
       setTimeout(() => {
         router.push(`/recipes/${data.id}`);
         router.refresh();
-      }, 3300);
+      }, 3200);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
