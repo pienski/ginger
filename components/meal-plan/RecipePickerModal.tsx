@@ -32,9 +32,10 @@ interface RecipePickerModalProps {
   initialDate: string; // the clicked cell's day (pre-selected)
   category: string;
   presetRecipe?: PickerItem | null; // "Repeat" mode: recipe already chosen
+  initialServings?: number; // servings to pre-fill the stepper with (default 2)
   occupied: Record<string, string>; // date -> existing recipe title for this category
   onClose: () => void;
-  onConfirm: (recipe: PickerItem, dates: string[]) => void;
+  onConfirm: (recipe: PickerItem, dates: string[], servings: number) => void;
 }
 
 export default function RecipePickerModal({
@@ -42,12 +43,14 @@ export default function RecipePickerModal({
   initialDate,
   category,
   presetRecipe = null,
+  initialServings = 2,
   occupied,
   onClose,
   onConfirm,
 }: RecipePickerModalProps) {
   const [selectedRecipe, setSelectedRecipe] = useState<PickerItem | null>(presetRecipe);
   const [selectedDates, setSelectedDates] = useState<string[]>([initialDate]);
+  const [servings, setServings] = useState(initialServings);
 
   // Recipe-list state (only used in the "choose recipe" step).
   const [showAll, setShowAll] = useState(false);
@@ -196,6 +199,36 @@ export default function RecipePickerModal({
                 </button>
               </div>
 
+              {/* Servings to cook (drives the grocery list) */}
+              {!isNoMeal && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    Servings to cook
+                  </span>
+                  <div className="flex items-center gap-1 border border-gray-100 dark:border-zinc-800 rounded-lg p-1 bg-gray-50/50 dark:bg-zinc-800/50">
+                    <button
+                      type="button"
+                      onClick={() => setServings((s) => Math.max(1, s - 1))}
+                      className="w-7 h-7 flex items-center justify-center hover:bg-white dark:hover:bg-zinc-700 rounded-md transition-colors text-gray-500 dark:text-gray-400"
+                      aria-label="Fewer servings"
+                    >
+                      −
+                    </button>
+                    <span className="w-8 text-center text-sm font-bold text-gray-900 dark:text-gray-100">
+                      {servings}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setServings((s) => s + 1)}
+                      className="w-7 h-7 flex items-center justify-center hover:bg-white dark:hover:bg-zinc-700 rounded-md transition-colors text-gray-500 dark:text-gray-400"
+                      aria-label="More servings"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Day toggles */}
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -250,7 +283,7 @@ export default function RecipePickerModal({
             {/* Confirm */}
             <div className="p-4 border-t border-gray-100 dark:border-zinc-800">
               <button
-                onClick={() => onConfirm(selectedRecipe!, selectedDates)}
+                onClick={() => onConfirm(selectedRecipe!, selectedDates, servings)}
                 disabled={selectedDates.length === 0}
                 className={cn(
                   "w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold transition-colors",

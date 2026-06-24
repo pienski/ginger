@@ -8,6 +8,8 @@ import { eq, sql } from "drizzle-orm";
 import IngredientList from "@/components/recipes/IngredientList";
 import DirectionSteps from "@/components/recipes/DirectionSteps";
 import DeleteButton from "@/components/recipes/DeleteButton";
+import CopyMarkdownButton from "@/components/recipes/CopyMarkdownButton";
+import { recipeToMarkdown } from "@/lib/markdown/recipe";
 import { getTagStyles, cn } from "@/lib/utils";
 import { formatTimeAgo, formatFullDate } from "@/lib/dates";
 import ReactMarkdown from "react-markdown";
@@ -111,13 +113,14 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
           </div>
 
           <div className="mt-6 md:mt-auto pt-4 border-t border-gray-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3">
               <Link
                 href={`/recipes/${recipe.id}/edit`}
                 className="flex items-center gap-2 bg-blue-600 dark:bg-blue-700 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-sm"
               >
                 <Pencil className="w-3.5 h-3.5" /> Edit
               </Link>
+              <CopyMarkdownButton markdown={recipeToMarkdown(recipe)} />
               <DeleteButton recipeId={recipe.id} recipeTitle={recipe.title} />
             </div>
             

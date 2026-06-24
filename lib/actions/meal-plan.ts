@@ -21,6 +21,7 @@ export interface PlannedMeal {
   title: string | null; // null for a "No meal" slot
   photo_url: string | null;
   photo_position: string | null;
+  servings: number; // how many servings to cook (drives grocery scaling)
 }
 
 // Keyed by `${date}|${category}`.
@@ -38,6 +39,7 @@ export async function getWeekPlan(mondayISO: string): Promise<WeekPlan> {
       title: recipes.title,
       photo_url: recipes.photo_url,
       photo_position: recipes.photo_position,
+      servings: mealPlan.servings,
     })
     .from(mealPlan)
     // Left join: "No meal" rows have a null recipe_id and no matching recipe.

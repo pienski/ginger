@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const appName = process.env.APP_NAME || "Recipe App";
+const appName = process.env.APP_NAME || "Ginger";
 
 export const metadata: Metadata = {
   title: {

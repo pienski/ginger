@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="app/assets/new_favicon.png" alt="Recipe Book icon" width="96" height="96" />
+<img src="app/assets/new_favicon.png" alt="Ginger icon" width="96" height="96" />
 
-# Recipe Book
+# Ginger — Recipe Manager & Meal Planner
 
 A modern, minimalist recipe manager and meal planner built for families and couples. Originally designed to replace a Notion-based recipe store, this app focuses on a clean cooking experience, smart scaling, and effortless recipe importing using AI.
 
@@ -16,16 +16,17 @@ A modern, minimalist recipe manager and meal planner built for families and coup
 - **AI-Powered Recipe Import**: Paste free-text recipes from blogs, OCR results, or notes. The app uses LLMs to structure them into title, ingredients, and steps automatically.
 - **Dynamic Portion Scaling**: Instantly scale ingredient amounts based on your desired serving size. The UI handles the math and rounds amounts for better readability.
 - **Cook Mode**: Interactive "check-off" lists for both ingredients and direction steps to help you keep track while cooking.
-- **Markdown Support**: Use rich formatting in recipe notes and directions for better organization.
+- **Markdown Support & Export**: Use rich formatting in recipe notes and directions, and copy any recipe as clean Markdown with one click.
 - **Responsive Design**: Optimized for desktop planning and one-handed mobile browsing in the kitchen.
 - **Smart Tagging**: Organize recipes with a flexible tagging system and a color-coded UI.
 - **Recipe Search & Filter**: Quickly find what you need by title, tags, or sort by recently added/cooked.
 - **Image Uploads**: Direct integration with Vercel Blob for hosting your own food photos.
-- **Weekly Meal Planner**: A Monday–Sunday calendar (days × meal categories) for assigning a recipe to each day's meals. Navigate freely between weeks — past weeks double as your meal history, since assigning a meal *is* the record.
+- **Weekly Meal Planner**: A Monday–Sunday calendar (days × meal categories) for assigning a recipe — and how many servings you'll cook — to each day's meals. Navigate freely between weeks — past weeks double as your meal history, since assigning a meal *is* the record.
 - **Smart Meal Suggestions**: When filling a slot, get ranked recipe suggestions that prioritize meals you haven't eaten recently while boosting your frequently-cooked favorites. Never-tried recipes surface too, and the picker filters to the slot's category with a "show all" toggle.
+- **Grocery List Builder**: Pick a date range across your meal plan — even one spanning several weeks — then choose which planned meals (and how many servings of each) to shop for. The app aggregates and scales the ingredients into a copy-pasteable Markdown checklist for your notes app.
 
 ### 🗺️ Roadmap (Upcoming)
-- **Grocery List Builder**: Aggregate ingredients from multiple recipes into a categorized shopping list.
+- **Smart Grocery Cleanup**: Use an LLM to refine the aggregated grocery list — merging similar items and filtering out pantry staples like spices.
 
 ---
 
@@ -42,7 +43,7 @@ A modern, minimalist recipe manager and meal planner built for families and coup
 
 ## 🏠 Self-Hosting Guide
 
-Hosting your own instance of Recipe Book is straightforward, especially with Vercel and Neon.
+Hosting your own instance of Ginger is straightforward, especially with Vercel and Neon.
 
 ### 1. Prerequisites
 - A **GitHub** account.

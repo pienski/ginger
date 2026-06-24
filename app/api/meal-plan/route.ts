@@ -47,6 +47,11 @@ export async function POST(request: Request) {
     }
     const recipe_id: string | null = body.recipe_id ?? null;
 
+    // Servings to cook for this slot (drives grocery scaling). Default 2.
+    const parsedServings = Number(body.servings);
+    const servings =
+      Number.isInteger(parsedServings) && parsedServings > 0 ? parsedServings : 2;
+
     // Look up the recipe only for real assignments (skip the lookup for "No meal").
     const recipe = recipe_id
       ? await db.query.recipes.findFirst({
@@ -62,10 +67,10 @@ export async function POST(request: Request) {
     // means re-assigning an occupied slot just overwrites it.
     await db
       .insert(mealPlan)
-      .values(dates.map((date) => ({ date, category, recipe_id })))
+      .values(dates.map((date) => ({ date, category, recipe_id, servings })))
       .onConflictDoUpdate({
         target: [mealPlan.date, mealPlan.category],
-        set: { recipe_id },
+        set: { recipe_id, servings },
       });
 
     // Return the joined shape the calendar cells need for an optimistic update
@@ -77,6 +82,7 @@ export async function POST(request: Request) {
       title: recipe?.title ?? null,
       photo_url: recipe?.photo_url ?? null,
       photo_position: recipe?.photo_position ?? null,
+      servings,
     });
   } catch (error) {
     console.error("Failed to save meal plan slot:", error);

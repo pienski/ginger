@@ -39,6 +39,8 @@ export const mealPlan = pgTable(
     recipe_id: text("recipe_id").references(() => recipes.id, {
       onDelete: "cascade",
     }),
+    // How many servings to cook for this slot — drives grocery-list scaling.
+    servings: integer("servings").notNull().default(2),
     created_at: timestamp("created_at").notNull().defaultNow(),
   },
   (t) => [unique("meal_plan_date_category_unique").on(t.date, t.category)],

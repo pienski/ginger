@@ -87,6 +87,13 @@ export function formatDayMonth(iso: string): string {
   return `${d} ${MONTHS_SHORT[m - 1]}`;
 }
 
+/** Render a 'YYYY-MM-DD' string as e.g. 'Thu 19 Jun' (short weekday + day + month). */
+export function formatWeekdayShort(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const weekday = WEEKDAYS[(new Date(y, m - 1, d).getDay() + 6) % 7];
+  return `${weekday} ${d} ${MONTHS_SHORT[m - 1]}`;
+}
+
 /**
  * Compact, rounded-down "time ago" label for a past 'YYYY-MM-DD' date,
  * counted from local today. Abbreviated to stay space-frugal in cards/meta rows.

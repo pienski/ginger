@@ -6,7 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import appIcon from "@/app/icon.png";
+import appIcon from "@/app/assets/new_favicon.png";
 
 export function Header() {
   const { data: session } = useSession();
@@ -21,7 +21,7 @@ export function Header() {
     { href: "/grocery", label: "Groceries" },
   ];
 
-  const appName = process.env.APP_NAME || "Recipe App";
+  const appName = process.env.APP_NAME || "Ginger";
 
   return (
     <header className="bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 transition-colors duration-300 sticky top-0 z-50">

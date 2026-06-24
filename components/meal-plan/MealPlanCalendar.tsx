@@ -96,6 +96,7 @@ export default function MealPlanCalendar({
     category: string,
     recipe: PickerItem,
     dates: string[],
+    servings: number,
   ) => {
     if (dates.length === 0) return;
     setPicker(null);
@@ -115,6 +116,7 @@ export default function MealPlanCalendar({
           title: isNoMeal ? null : recipe.title,
           photo_url: isNoMeal ? null : recipe.photo_url,
           photo_position: isNoMeal ? null : recipe.photo_position,
+          servings,
         };
       }
       return next;
@@ -124,7 +126,7 @@ export default function MealPlanCalendar({
       const res = await fetch("/api/meal-plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dates, category, recipe_id: recipeId }),
+        body: JSON.stringify({ dates, category, recipe_id: recipeId, servings }),
       });
       if (!res.ok) throw new Error(await res.text());
       router.refresh();
@@ -285,10 +287,11 @@ export default function MealPlanCalendar({
           initialDate={picker.date}
           category={picker.category}
           presetRecipe={picker.presetRecipe}
+          initialServings={plan[slotKey(picker.date, picker.category)]?.servings ?? 2}
           occupied={occupiedFor(picker.category)}
           onClose={() => setPicker(null)}
-          onConfirm={(recipe, dates) =>
-            assignRecipeToDates(picker.category, recipe, dates)
+          onConfirm={(recipe, dates, servings) =>
+            assignRecipeToDates(picker.category, recipe, dates, servings)
           }
         />
       )}
@@ -418,9 +421,14 @@ function Cell({
             <span className="text-lg">🍳</span>
           )}
         </div>
-        <span className="text-xs font-medium leading-snug line-clamp-2 text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-          {meal.title}
-        </span>
+        <div className="min-w-0 flex-1">
+          <span className="block text-xs font-medium leading-snug line-clamp-2 text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+            {meal.title}
+          </span>
+          <span className="block text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+            {meal.servings} {meal.servings === 1 ? "serving" : "servings"}
+          </span>
+        </div>
       </Link>
       <div className="flex items-center gap-0.5 shrink-0 self-start opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity">
         <button
