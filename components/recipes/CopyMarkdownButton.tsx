@@ -27,7 +27,7 @@ export default function CopyMarkdownButton({ markdown }: CopyMarkdownButtonProps
       className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border border-gray-200 dark:border-zinc-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
     >
       {copied ? <Check className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
-      {copied ? "Copied" : "Copy as Markdown"}
+      {copied ? "Copied" : "Copy"}
     </button>
   );
 }

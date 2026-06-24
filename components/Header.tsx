@@ -17,7 +17,7 @@ export function Header() {
   const navLinks = [
     { href: "/recipes", label: "Recipes" },
     { href: "/notes", label: "Notes" },
-    { href: "/plan", label: "Meal Plan" },
+    { href: "/plan", label: "Plan" },
     { href: "/grocery", label: "Groceries" },
   ];
 
