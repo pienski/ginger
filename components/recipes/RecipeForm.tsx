@@ -16,10 +16,21 @@ import {
   DragStartEvent,
   DragOverlay,
 } from "@dnd-kit/core";
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, AlertTriangle, X, Move } from "lucide-react";
-import { getTagStyles, cn, PREDEFINED_UNITS, getPluralizedUnit } from "@/lib/utils";
+import {
+  getTagStyles,
+  cn,
+  PREDEFINED_UNITS,
+  getPluralizedUnit,
+} from "@/lib/utils";
 import RecipeCreatedCelebration from "./RecipeCreatedCelebration";
 
 type FormIngredient = Ingredient & { id: string };
@@ -69,7 +80,10 @@ function PhotoRepositioner({
   };
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    naturalRef.current = { w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight };
+    naturalRef.current = {
+      w: e.currentTarget.naturalWidth,
+      h: e.currentTarget.naturalHeight,
+    };
     refreshCanReposition();
   };
 
@@ -108,7 +122,11 @@ function PhotoRepositioner({
         style={{ touchAction: canReposition ? "none" : "auto" }}
         className={cn(
           "relative w-full aspect-[4/3] overflow-hidden rounded-md border dark:border-zinc-800 group select-none",
-          canReposition ? (dragging ? "cursor-grabbing" : "cursor-grab") : "cursor-default",
+          canReposition
+            ? dragging
+              ? "cursor-grabbing"
+              : "cursor-grab"
+            : "cursor-default",
         )}
       >
         <img
@@ -183,7 +201,7 @@ function IngredientRow({
 }) {
   const datalistId = `unit-suggestions-${ingredient.id}`;
   const filteredUnits = PREDEFINED_UNITS.filter(
-    (u) => u.singular.toLowerCase() !== (ingredient.unit || "").toLowerCase()
+    (u) => u.singular.toLowerCase() !== (ingredient.unit || "").toLowerCase(),
   );
 
   return (
@@ -576,7 +594,8 @@ export default function RecipeForm({
     setHighlightedSuggestionIndex(-1);
   };
   const [isTagInputFocused, setIsTagInputFocused] = useState(false);
-  const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
+  const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] =
+    useState(-1);
   const suggestionsContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -586,7 +605,9 @@ export default function RecipeForm({
       suggestionsContainerRef.current.children[highlightedSuggestionIndex]
     ) {
       const container = suggestionsContainerRef.current;
-      const element = container.children[highlightedSuggestionIndex] as HTMLElement;
+      const element = container.children[
+        highlightedSuggestionIndex
+      ] as HTMLElement;
 
       const containerTop = container.scrollTop;
       const containerBottom = containerTop + container.clientHeight;
@@ -658,12 +679,15 @@ export default function RecipeForm({
 
   // Drag state
   const [activeId, setActiveId] = useState<string | null>(null);
-  const activeGroup = useMemo(() => groups.find(g => g.id === activeId), [groups, activeId]);
+  const activeGroup = useMemo(
+    () => groups.find((g) => g.id === activeId),
+    [groups, activeId],
+  );
   const activeIngredient = useMemo(() => {
     if (!activeId) return null;
-    if (!useIngredientGroups) return ingredients.find(i => i.id === activeId);
+    if (!useIngredientGroups) return ingredients.find((i) => i.id === activeId);
     for (const g of groups) {
-      const found = g.ingredients.find(i => i.id === activeId);
+      const found = g.ingredients.find((i) => i.id === activeId);
       if (found) return found;
     }
     return null;
@@ -675,7 +699,10 @@ export default function RecipeForm({
     ],
   );
 
-  const activeDirection = useMemo(() => directions.find(d => d.id === activeId), [directions, activeId]);
+  const activeDirection = useMemo(
+    () => directions.find((d) => d.id === activeId),
+    [directions, activeId],
+  );
   const [notes, setNotes] = useState(initialData?.notes || "");
   const [sourceUrl, setSourceUrl] = useState(initialData?.source_url || "");
 
@@ -741,10 +768,16 @@ export default function RecipeForm({
       if (anchor && anchor instanceof HTMLAnchorElement) {
         const url = new URL(anchor.href, window.location.origin);
         const isInternal = url.origin === window.location.origin;
-        const isSamePage = url.pathname === window.location.pathname && url.search === window.location.search;
+        const isSamePage =
+          url.pathname === window.location.pathname &&
+          url.search === window.location.search;
 
         if (isInternal && !isSamePage) {
-          if (!window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
+          if (
+            !window.confirm(
+              "You have unsaved changes. Are you sure you want to leave?",
+            )
+          ) {
             e.preventDefault();
             e.stopImmediatePropagation();
           }
@@ -763,7 +796,11 @@ export default function RecipeForm({
 
   const handleCancel = () => {
     if (isDirty) {
-      if (window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
+      if (
+        window.confirm(
+          "You have unsaved changes. Are you sure you want to leave?",
+        )
+      ) {
         router.back();
       }
     } else {
@@ -810,7 +847,11 @@ export default function RecipeForm({
         name: name === "Other" ? "" : name,
         ingredients: ings,
       }));
-      setGroups(newGroups.length > 0 ? newGroups : [{ id: createId(), name: "", ingredients: [] }]);
+      setGroups(
+        newGroups.length > 0
+          ? newGroups
+          : [{ id: createId(), name: "", ingredients: [] }],
+      );
       setIngredients([]);
     } else {
       // Grouped -> Flat
@@ -861,9 +902,9 @@ export default function RecipeForm({
           (field === "amount" || field === "metric_amount") && value !== ""
             ? Number(value)
             : value;
-        
+
         const newIng = { ...ing, [field]: val };
-        
+
         return newIng;
       }),
     );
@@ -880,9 +921,7 @@ export default function RecipeForm({
     setGroups(groups.filter((g) => g.id !== groupId));
   };
   const updateGroupName = (groupId: string, name: string) => {
-    setGroups(
-      groups.map((g) => (g.id === groupId ? { ...g, name } : g)),
-    );
+    setGroups(groups.map((g) => (g.id === groupId ? { ...g, name } : g)));
   };
   const addIngredientToGroup = (groupId: string) => {
     setGroups(
@@ -923,9 +962,9 @@ export default function RecipeForm({
               (field === "amount" || field === "metric_amount") && value !== ""
                 ? Number(value)
                 : value;
-            
+
             const newIng = { ...ing, [field]: val };
-            
+
             return newIng;
           }),
         };
@@ -988,19 +1027,23 @@ export default function RecipeForm({
     const overId = over.id as string;
 
     // Check if dragging group
-    if (groups.some(g => g.id === activeId)) {
+    if (groups.some((g) => g.id === activeId)) {
       // Real-time group sorting
-      const activeIndex = groups.findIndex(g => g.id === activeId);
-      const overIndex = groups.findIndex(g => g.id === overId);
+      const activeIndex = groups.findIndex((g) => g.id === activeId);
+      const overIndex = groups.findIndex((g) => g.id === overId);
       if (overIndex !== -1 && activeIndex !== overIndex) {
-        setGroups(gs => arrayMove(gs, activeIndex, overIndex));
+        setGroups((gs) => arrayMove(gs, activeIndex, overIndex));
       }
       return;
     }
 
     // Dragging ingredient
-    const activeG = groups.find((g) => g.ingredients.some((i) => i.id === activeId));
-    const overG = groups.find((g) => g.id === overId || g.ingredients.some((i) => i.id === overId));
+    const activeG = groups.find((g) =>
+      g.ingredients.some((i) => i.id === activeId),
+    );
+    const overG = groups.find(
+      (g) => g.id === overId || g.ingredients.some((i) => i.id === overId),
+    );
 
     if (!activeG || !overG) return;
 
@@ -1009,12 +1052,17 @@ export default function RecipeForm({
       const oldIndex = activeG.ingredients.findIndex((i) => i.id === activeId);
       const newIndex = overG.ingredients.findIndex((i) => i.id === overId);
       if (oldIndex !== newIndex && newIndex !== -1) {
-        setGroups(gs => gs.map(g => {
-          if (g.id === activeG.id) {
-            return { ...g, ingredients: arrayMove(g.ingredients, oldIndex, newIndex) };
-          }
-          return g;
-        }));
+        setGroups((gs) =>
+          gs.map((g) => {
+            if (g.id === activeG.id) {
+              return {
+                ...g,
+                ingredients: arrayMove(g.ingredients, oldIndex, newIndex),
+              };
+            }
+            return g;
+          }),
+        );
       }
     } else {
       // Inter-group move
@@ -1050,7 +1098,9 @@ export default function RecipeForm({
     setDirections([...directions, { id: createId(), text: "" }]);
   };
   const updateDirection = (id: string, value: string) => {
-    setDirections(directions.map((d) => (d.id === id ? { ...d, text: value } : d)));
+    setDirections(
+      directions.map((d) => (d.id === id ? { ...d, text: value } : d)),
+    );
   };
   const removeDirection = (id: string) => {
     setDirections(directions.filter((d) => d.id !== id));
@@ -1077,7 +1127,11 @@ export default function RecipeForm({
 
     let finalIngredients: Ingredient[] = [];
     if (useIngredientGroups) {
-      if (groups.some((g) => g.ingredients.some((ing) => ing.name.trim() !== "" && !g.name.trim()))) {
+      if (
+        groups.some((g) =>
+          g.ingredients.some((ing) => ing.name.trim() !== "" && !g.name.trim()),
+        )
+      ) {
         setError("When using groups, all ingredients must belong to a group.");
         setLoading(false);
         return;
@@ -1143,13 +1197,15 @@ export default function RecipeForm({
         return;
       }
 
-      // Play the celebration before navigating to the new recipe.
+      // Play the celebration before navigating to the new recipe. Close just
+      // after the chef cat lands its third jump: 0.6s rise-in delay + ~3 jump
+      // cycles of the sprite animation (see .celebration-cat-sprite in globals.css).
       setCelebrating(true);
       router.prefetch(`/recipes/${data.id}`);
       setTimeout(() => {
         router.push(`/recipes/${data.id}`);
         router.refresh();
-      }, 3500);
+      }, 3300);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
@@ -1162,7 +1218,7 @@ export default function RecipeForm({
 
       {error && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div 
+          <div
             className="bg-white dark:bg-zinc-900 border-2 border-red-500 rounded-xl shadow-2xl max-w-md w-full p-6 transform animate-in zoom-in-95 duration-200"
             role="alert"
           >
@@ -1174,11 +1230,9 @@ export default function RecipeForm({
                 <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">
                   Wait, something&apos;s wrong
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  {error}
-                </p>
+                <p className="text-gray-600 dark:text-gray-400">{error}</p>
               </div>
-              <button 
+              <button
                 onClick={() => setError(null)}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
                 aria-label="Close error"
@@ -1199,406 +1253,428 @@ export default function RecipeForm({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl mx-auto pb-20">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-8 max-w-4xl mx-auto pb-20"
+      >
         {/* Basic Info */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold border-b dark:border-zinc-800 pb-2 text-gray-900 dark:text-gray-100">
-          Basic Information
-        </h2>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Title*
-          </label>
-          <input
-            type="text"
-            required
-            className="mt-1 w-full border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Description
-          </label>
-          <textarea
-            className="mt-1 w-full border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
-            rows={2}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold border-b dark:border-zinc-800 pb-2 text-gray-900 dark:text-gray-100">
+            Basic Information
+          </h2>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Photo
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Title*
             </label>
-            <div className="space-y-2">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileUpload}
-                disabled={isUploading}
-                className="block w-full text-sm text-gray-500 dark:text-gray-400
+            <input
+              type="text"
+              required
+              className="mt-1 w-full border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Description
+            </label>
+            <textarea
+              className="mt-1 w-full border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Photo
+              </label>
+              <div className="space-y-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                  className="block w-full text-sm text-gray-500 dark:text-gray-400
                   file:mr-4 file:py-2 file:px-4
                   file:rounded-md file:border-0
                   file:text-sm file:font-semibold
                   file:bg-gray-50 dark:file:bg-zinc-800 file:text-gray-700 dark:file:text-gray-300
                   hover:file:bg-gray-100 dark:hover:file:bg-zinc-700
                   cursor-pointer disabled:opacity-50"
-              />
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">or URL</span>
-                <input
-                  type="url"
-                  className="flex-1 border dark:border-zinc-800 rounded-md px-3 py-1 text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
-                  value={photoUrl}
-                  onChange={(e) => setPhotoUrl(e.target.value)}
-                  placeholder="https://..."
                 />
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                    or URL
+                  </span>
+                  <input
+                    type="url"
+                    className="flex-1 border dark:border-zinc-800 rounded-md px-3 py-1 text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+                    value={photoUrl}
+                    onChange={(e) => setPhotoUrl(e.target.value)}
+                    placeholder="https://..."
+                  />
+                </div>
+                {isUploading && (
+                  <div className="text-xs text-blue-600 dark:text-blue-400 animate-pulse">
+                    Uploading image...
+                  </div>
+                )}
+                {photoUrl && (
+                  <PhotoRepositioner
+                    src={photoUrl}
+                    position={photoPosition}
+                    onChange={setPhotoPosition}
+                    onRemove={() => {
+                      setPhotoUrl("");
+                      setPhotoPosition("50% 50%");
+                    }}
+                  />
+                )}
               </div>
-              {isUploading && (
-                <div className="text-xs text-blue-600 dark:text-blue-400 animate-pulse">
-                  Uploading image...
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Base Servings*
+              </label>
+              <input
+                type="number"
+                required
+                min="1"
+                className="mt-1 w-full border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+                value={servings}
+                onChange={(e) => setServings(Number(e.target.value))}
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Tags */}
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold border-b dark:border-zinc-800 pb-2 text-gray-900 dark:text-gray-100">
+            Tags
+          </h2>
+          <div className="flex gap-2">
+            <div className="relative flex-grow">
+              <input
+                type="text"
+                className="w-full border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors placeholder-gray-400 dark:placeholder-gray-500"
+                value={newTag}
+                onChange={(e) => handleNewTagChange(e.target.value)}
+                onFocus={() => setIsTagInputFocused(true)}
+                onBlur={() =>
+                  setTimeout(() => setIsTagInputFocused(false), 200)
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setHighlightedSuggestionIndex((prev) =>
+                      prev < filteredSuggestions.length - 1 ? prev + 1 : prev,
+                    );
+                  } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setHighlightedSuggestionIndex((prev) =>
+                      prev > -1 ? prev - 1 : prev,
+                    );
+                  } else if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (
+                      highlightedSuggestionIndex >= 0 &&
+                      highlightedSuggestionIndex < filteredSuggestions.length
+                    ) {
+                      addTag(filteredSuggestions[highlightedSuggestionIndex]);
+                    } else {
+                      addTag();
+                    }
+                  }
+                }}
+                placeholder="Add a tag (e.g. Dinner, Spicy)"
+              />
+              {isTagInputFocused && filteredSuggestions.length > 0 && (
+                <div
+                  ref={suggestionsContainerRef}
+                  className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-900 border dark:border-zinc-800 rounded-md shadow-lg max-h-[110px] overflow-y-auto"
+                >
+                  {filteredSuggestions.map((suggestion, index) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                        index === highlightedSuggestionIndex
+                          ? "bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100"
+                          : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800"
+                      }`}
+                      onClick={() => addTag(suggestion)}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
                 </div>
               )}
-              {photoUrl && (
-                <PhotoRepositioner
-                  src={photoUrl}
-                  position={photoPosition}
-                  onChange={setPhotoPosition}
-                  onRemove={() => {
-                    setPhotoUrl("");
-                    setPhotoPosition("50% 50%");
-                  }}
-                />
-              )}
             </div>
+            <button
+              type="button"
+              onClick={() => addTag()}
+              className="bg-gray-100 dark:bg-zinc-800 px-4 py-2 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 transition-colors"
+            >
+              Add
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {tags.map((tag) => {
+              const styles = getTagStyles(tag);
+              return (
+                <span
+                  key={tag}
+                  className={cn(
+                    "px-3 py-1 rounded-full flex items-center gap-2 text-sm font-medium border transition-colors",
+                    styles.bg,
+                    styles.text,
+                    styles.border,
+                    "dark:bg-opacity-10 dark:border-opacity-30",
+                  )}
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => removeTag(tag)}
+                    className="hover:opacity-70 font-bold transition-opacity"
+                  >
+                    &times;
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Ingredients */}
+        <section className="space-y-6">
+          <div className="flex justify-between items-end border-b dark:border-zinc-800 pb-2">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              Ingredients
+            </h2>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useIngredientGroups}
+                onChange={(e) => handleToggleGroups(e.target.checked)}
+                className="rounded border-gray-300 dark:border-zinc-700 text-blue-600 focus:ring-blue-500 bg-white dark:bg-zinc-900"
+              />
+              Use Groups
+            </label>
+          </div>
+
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
+            onDragCancel={() => setActiveId(null)}
+          >
+            {useIngredientGroups ? (
+              <div className="space-y-6">
+                <SortableContext
+                  items={groups.map((g) => g.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {groups.map((group) => (
+                    <SortableGroup
+                      key={group.id}
+                      group={group}
+                      onUpdateName={(name) => updateGroupName(group.id, name)}
+                      onRemove={() => removeGroup(group.id)}
+                      onAddIngredient={() => addIngredientToGroup(group.id)}
+                    >
+                      <SortableContext
+                        items={group.ingredients.map((i) => i.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        {group.ingredients.map((ing) => (
+                          <SortableIngredientRow
+                            key={ing.id}
+                            ingredient={ing}
+                            onUpdate={(field, value) =>
+                              updateGroupIngredient(
+                                group.id,
+                                ing.id,
+                                field,
+                                value,
+                              )
+                            }
+                            onRemove={() =>
+                              removeGroupIngredient(group.id, ing.id)
+                            }
+                          />
+                        ))}
+                      </SortableContext>
+                    </SortableGroup>
+                  ))}
+                </SortableContext>
+                <button
+                  type="button"
+                  onClick={addGroup}
+                  className="w-full py-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 font-medium hover:border-blue-400 hover:text-blue-500 transition-colors"
+                >
+                  + Add Ingredient Group
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="hidden md:flex gap-2 mb-2 text-sm font-medium text-gray-500 pl-8">
+                  <div className="w-20">Qty</div>
+                  <div className="w-24">Unit</div>
+                  <div className="w-36">Amount (g/ml)</div>
+                  <div className="flex-grow">Ingredient Name</div>
+                  <div className="w-10"></div>
+                </div>
+                <SortableContext
+                  items={ingredients.map((i) => i.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3">
+                    {ingredients.map((ing) => (
+                      <SortableIngredientRow
+                        key={ing.id}
+                        ingredient={ing}
+                        onUpdate={(field, value) =>
+                          updateIngredient(ing.id, field, value)
+                        }
+                        onRemove={() => removeIngredient(ing.id)}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+                <button
+                  type="button"
+                  onClick={addIngredient}
+                  className="text-blue-600 font-medium hover:underline pl-8"
+                >
+                  + Add Ingredient
+                </button>
+              </div>
+            )}
+
+            <DragOverlay adjustScale={false}>
+              {activeId ? (
+                activeGroup ? (
+                  <GroupContainer group={activeGroup} isOverlay>
+                    <div className="space-y-3">
+                      {activeGroup.ingredients.map((ing) => (
+                        <IngredientRow key={ing.id} ingredient={ing} />
+                      ))}
+                    </div>
+                  </GroupContainer>
+                ) : activeIngredient ? (
+                  <IngredientRow ingredient={activeIngredient} isOverlay />
+                ) : null
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        </section>
+
+        {/* Directions */}
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold border-b dark:border-zinc-800 pb-2 text-gray-900 dark:text-gray-100">
+            Directions
+          </h2>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDirectionDragEnd}
+            onDragCancel={() => setActiveId(null)}
+          >
+            <div className="space-y-3">
+              <SortableContext
+                items={directions.map((d) => d.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {directions.map((direction, index) => (
+                  <SortableDirectionRow
+                    key={direction.id}
+                    direction={direction}
+                    index={index}
+                    onUpdate={(value) => updateDirection(direction.id, value)}
+                    onRemove={() => removeDirection(direction.id)}
+                  />
+                ))}
+              </SortableContext>
+            </div>
+
+            <DragOverlay adjustScale={false}>
+              {activeId && activeDirection ? (
+                <DirectionRow
+                  step={activeDirection.text}
+                  index={directions.findIndex((d) => d.id === activeId)}
+                  isOverlay
+                />
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+          <button
+            type="button"
+            onClick={addDirection}
+            className="text-blue-600 dark:text-blue-400 font-medium hover:underline"
+          >
+            + Add Step
+          </button>
+        </section>
+
+        {/* Notes & Source */}
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold border-b dark:border-zinc-800 pb-2 text-gray-900 dark:text-gray-100">
+            Notes & Source
+          </h2>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Notes
+            </label>
+            <textarea
+              className="mt-1 w-full border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+              rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Extra tips, substitutions..."
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Base Servings*
+              Source URL
             </label>
             <input
-              type="number"
-              required
-              min="1"
+              type="url"
               className="mt-1 w-full border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
-              value={servings}
-              onChange={(e) => setServings(Number(e.target.value))}
+              value={sourceUrl}
+              onChange={(e) => setSourceUrl(e.target.value)}
+              placeholder="Link to original recipe"
             />
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Tags */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold border-b dark:border-zinc-800 pb-2 text-gray-900 dark:text-gray-100">Tags</h2>
-        <div className="flex gap-2">
-          <div className="relative flex-grow">
-            <input
-              type="text"
-              className="w-full border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors placeholder-gray-400 dark:placeholder-gray-500"
-              value={newTag}
-              onChange={(e) => handleNewTagChange(e.target.value)}
-              onFocus={() => setIsTagInputFocused(true)}
-              onBlur={() => setTimeout(() => setIsTagInputFocused(false), 200)}
-              onKeyDown={(e) => {
-                if (e.key === "ArrowDown") {
-                  e.preventDefault();
-                  setHighlightedSuggestionIndex((prev) =>
-                    prev < filteredSuggestions.length - 1 ? prev + 1 : prev,
-                  );
-                } else if (e.key === "ArrowUp") {
-                  e.preventDefault();
-                  setHighlightedSuggestionIndex((prev) => (prev > -1 ? prev - 1 : prev));
-                } else if (e.key === "Enter") {
-                  e.preventDefault();
-                  if (
-                    highlightedSuggestionIndex >= 0 &&
-                    highlightedSuggestionIndex < filteredSuggestions.length
-                  ) {
-                    addTag(filteredSuggestions[highlightedSuggestionIndex]);
-                  } else {
-                    addTag();
-                  }
-                }
-              }}
-              placeholder="Add a tag (e.g. Dinner, Spicy)"
-            />
-            {isTagInputFocused && filteredSuggestions.length > 0 && (
-              <div
-                ref={suggestionsContainerRef}
-                className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-900 border dark:border-zinc-800 rounded-md shadow-lg max-h-[110px] overflow-y-auto"
-              >
-                {filteredSuggestions.map((suggestion, index) => (
-                  <button
-                    key={suggestion}
-                    type="button"
-                    className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                      index === highlightedSuggestionIndex 
-                        ? "bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100" 
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800"
-                    }`}
-                    onClick={() => addTag(suggestion)}
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="pt-6 flex gap-4">
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-blue-600 dark:bg-blue-700 text-white px-8 py-3 rounded-md font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 flex-grow transition-colors"
+          >
+            {loading
+              ? "Saving..."
+              : isEditing
+                ? "Update Recipe"
+                : "Create Recipe"}
+          </button>
           <button
             type="button"
-            onClick={() => addTag()}
-            className="bg-gray-100 dark:bg-zinc-800 px-4 py-2 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 transition-colors"
+            onClick={handleCancel}
+            className="px-8 py-3 border dark:border-zinc-800 rounded-md hover:bg-gray-50 dark:hover:bg-zinc-800 text-gray-700 dark:text-gray-300 transition-colors"
           >
-            Add
+            Cancel
           </button>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => {
-            const styles = getTagStyles(tag);
-            return (
-              <span
-                key={tag}
-                className={cn(
-                  "px-3 py-1 rounded-full flex items-center gap-2 text-sm font-medium border transition-colors",
-                  styles.bg,
-                  styles.text,
-                  styles.border,
-                  "dark:bg-opacity-10 dark:border-opacity-30"
-                )}
-              >
-                {tag}
-                <button
-                  type="button"
-                  onClick={() => removeTag(tag)}
-                  className="hover:opacity-70 font-bold transition-opacity"
-                >
-                  &times;
-                </button>
-              </span>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Ingredients */}
-      <section className="space-y-6">
-        <div className="flex justify-between items-end border-b dark:border-zinc-800 pb-2">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Ingredients</h2>
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={useIngredientGroups}
-              onChange={(e) => handleToggleGroups(e.target.checked)}
-              className="rounded border-gray-300 dark:border-zinc-700 text-blue-600 focus:ring-blue-500 bg-white dark:bg-zinc-900"
-            />
-            Use Groups
-          </label>
-        </div>
-
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
-          onDragEnd={handleDragEnd}
-          onDragCancel={() => setActiveId(null)}
-        >
-          {useIngredientGroups ? (
-            <div className="space-y-6">
-              <SortableContext
-                items={groups.map((g) => g.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {groups.map((group) => (
-                  <SortableGroup
-                    key={group.id}
-                    group={group}
-                    onUpdateName={(name) => updateGroupName(group.id, name)}
-                    onRemove={() => removeGroup(group.id)}
-                    onAddIngredient={() => addIngredientToGroup(group.id)}
-                  >
-                    <SortableContext
-                      items={group.ingredients.map((i) => i.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      {group.ingredients.map((ing) => (
-                        <SortableIngredientRow
-                          key={ing.id}
-                          ingredient={ing}
-                          onUpdate={(field, value) =>
-                            updateGroupIngredient(group.id, ing.id, field, value)
-                          }
-                          onRemove={() =>
-                            removeGroupIngredient(group.id, ing.id)
-                          }
-                        />
-                      ))}
-                    </SortableContext>
-                  </SortableGroup>
-                ))}
-              </SortableContext>
-              <button
-                type="button"
-                onClick={addGroup}
-                className="w-full py-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 font-medium hover:border-blue-400 hover:text-blue-500 transition-colors"
-              >
-                + Add Ingredient Group
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="hidden md:flex gap-2 mb-2 text-sm font-medium text-gray-500 pl-8">
-                <div className="w-20">Qty</div>
-                <div className="w-24">Unit</div>
-                <div className="w-36">Amount (g/ml)</div>
-                <div className="flex-grow">Ingredient Name</div>
-                <div className="w-10"></div>
-              </div>
-              <SortableContext
-                items={ingredients.map((i) => i.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-3">
-                  {ingredients.map((ing) => (
-                    <SortableIngredientRow
-                      key={ing.id}
-                      ingredient={ing}
-                      onUpdate={(field, value) =>
-                        updateIngredient(ing.id, field, value)
-                      }
-                      onRemove={() => removeIngredient(ing.id)}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-              <button
-                type="button"
-                onClick={addIngredient}
-                className="text-blue-600 font-medium hover:underline pl-8"
-              >
-                + Add Ingredient
-              </button>
-            </div>
-          )}
-
-          <DragOverlay adjustScale={false}>
-            {activeId ? (
-              activeGroup ? (
-                <GroupContainer group={activeGroup} isOverlay>
-                  <div className="space-y-3">
-                    {activeGroup.ingredients.map((ing) => (
-                      <IngredientRow key={ing.id} ingredient={ing} />
-                    ))}
-                  </div>
-                </GroupContainer>
-              ) : activeIngredient ? (
-                <IngredientRow ingredient={activeIngredient} isOverlay />
-              ) : null
-            ) : null}
-          </DragOverlay>
-        </DndContext>
-      </section>
-
-      {/* Directions */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold border-b dark:border-zinc-800 pb-2 text-gray-900 dark:text-gray-100">Directions</h2>
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDirectionDragEnd}
-          onDragCancel={() => setActiveId(null)}
-        >
-          <div className="space-y-3">
-            <SortableContext
-              items={directions.map((d) => d.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              {directions.map((direction, index) => (
-                <SortableDirectionRow
-                  key={direction.id}
-                  direction={direction}
-                  index={index}
-                  onUpdate={(value) => updateDirection(direction.id, value)}
-                  onRemove={() => removeDirection(direction.id)}
-                />
-              ))}
-            </SortableContext>
-          </div>
-
-          <DragOverlay adjustScale={false}>
-            {activeId && activeDirection ? (
-              <DirectionRow
-                step={activeDirection.text}
-                index={directions.findIndex((d) => d.id === activeId)}
-                isOverlay
-              />
-            ) : null}
-          </DragOverlay>
-        </DndContext>
-        <button
-          type="button"
-          onClick={addDirection}
-          className="text-blue-600 dark:text-blue-400 font-medium hover:underline"
-        >
-          + Add Step
-        </button>
-      </section>
-
-      {/* Notes & Source */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold border-b dark:border-zinc-800 pb-2 text-gray-900 dark:text-gray-100">Notes & Source</h2>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Notes
-          </label>
-          <textarea
-            className="mt-1 w-full border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
-            rows={3}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Extra tips, substitutions..."
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Source URL
-          </label>
-          <input
-            type="url"
-            className="mt-1 w-full border dark:border-zinc-800 rounded-md px-3 py-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
-            value={sourceUrl}
-            onChange={(e) => setSourceUrl(e.target.value)}
-            placeholder="Link to original recipe"
-          />
-        </div>
-      </section>
-
-      <div className="pt-6 flex gap-4">
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-blue-600 dark:bg-blue-700 text-white px-8 py-3 rounded-md font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 flex-grow transition-colors"
-        >
-          {loading
-            ? "Saving..."
-            : isEditing
-              ? "Update Recipe"
-              : "Create Recipe"}
-        </button>
-        <button
-          type="button"
-          onClick={handleCancel}
-          className="px-8 py-3 border dark:border-zinc-800 rounded-md hover:bg-gray-50 dark:hover:bg-zinc-800 text-gray-700 dark:text-gray-300 transition-colors"
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
+      </form>
     </>
   );
 }
