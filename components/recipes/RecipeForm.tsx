@@ -32,6 +32,7 @@ import {
   getPluralizedUnit,
 } from "@/lib/utils";
 import RecipeCreatedCelebration from "./RecipeCreatedCelebration";
+import spriteSheet from "@/app/assets/sprite_sheet.webp";
 
 type FormIngredient = Ingredient & { id: string };
 type FormGroup = { id: string; name: string; ingredients: FormIngredient[] };
@@ -540,6 +541,16 @@ export default function RecipeForm({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Warm the browser cache for the ~2.7MB celebration sprite sheet while the
+  // user is still filling out the form, so the chef-cat animation plays
+  // smoothly the instant the recipe is saved instead of stalling on a
+  // cold network fetch (notably on Vercel). Only the create flow celebrates.
+  useEffect(() => {
+    if (isEditing) return;
+    const img = new Image();
+    img.src = spriteSheet.src;
+  }, [isEditing]);
 
   const [loading, setLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);

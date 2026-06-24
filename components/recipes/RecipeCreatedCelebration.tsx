@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { Check, Sparkles } from "lucide-react";
-import spriteSheet from "@/app/assets/sprite_sheet.png";
+import spriteSheet from "@/app/assets/sprite_sheet.webp";
 
 interface RecipeCreatedCelebrationProps {
   title?: string;
