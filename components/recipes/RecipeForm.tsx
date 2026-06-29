@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Ingredient, Recipe } from "@/lib/db/schema";
+import { optimizeImageForUpload } from "@/lib/image";
 import { createId } from "@paralleldrive/cuid2";
 import {
   DndContext,
@@ -574,10 +575,12 @@ export default function RecipeForm({
     setIsUploading(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
+      const optimized = await optimizeImageForUpload(file);
+
+      const formData = new FormData();
+      formData.append("file", optimized);
+
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
@@ -1329,7 +1332,7 @@ export default function RecipeForm({
                 </div>
                 {isUploading && (
                   <div className="text-xs text-blue-600 dark:text-blue-400 animate-pulse">
-                    Uploading image...
+                    Processing image...
                   </div>
                 )}
                 {photoUrl && (
