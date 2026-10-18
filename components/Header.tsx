@@ -7,12 +7,20 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import appIcon from "@/app/assets/new_favicon.png";
+import { clearRecipeListState, RESET_RECIPES_EVENT } from "@/lib/recipe-session";
 
 export function Header() {
   const { data: session } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   if (!session) return null;
+
+  const handleResetRecipes = () => {
+    clearRecipeListState();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent(RESET_RECIPES_EVENT));
+    }
+  };
 
   const navLinks = [
     { href: "/recipes", label: "Recipes" },
@@ -28,6 +36,7 @@ export function Header() {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
         <Link
           href="/recipes"
+          onClick={handleResetRecipes}
           className="flex items-center gap-2 text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 min-w-0"
           title={appName}
         >
@@ -48,6 +57,7 @@ export function Header() {
             <Link 
               key={link.href}
               href={link.href} 
+              onClick={link.href === "/recipes" ? handleResetRecipes : undefined}
               className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors whitespace-nowrap"
             >
               {link.label}
@@ -82,7 +92,12 @@ export function Header() {
               key={link.href}
               href={link.href} 
               className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium"
-              onClick={() => setIsMenuOpen(false)}
+              onClick={() => {
+                setIsMenuOpen(false);
+                if (link.href === "/recipes") {
+                  handleResetRecipes();
+                }
+              }}
             >
               {link.label}
             </Link>

@@ -33,6 +33,7 @@ import {
 } from "@/lib/utils";
 import RecipeCreatedCelebration from "./RecipeCreatedCelebration";
 import spriteSheet from "@/app/assets/sprite_sheet.webp";
+import { updateRecipeInSession, clearRecipeListState } from "@/lib/recipe-session";
 
 type FormIngredient = Ingredient & { id: string };
 type FormGroup = { id: string; name: string; ingredients: FormIngredient[] };
@@ -1222,10 +1223,13 @@ export default function RecipeForm({
       const data = await res.json();
 
       if (isEditing) {
-        router.push(`/recipes/${data.id}`);
+        updateRecipeInSession(data);
+        router.replace(`/recipes/${data.id}`);
         router.refresh();
         return;
       }
+
+      clearRecipeListState();
 
       // Play the celebration before navigating to the new recipe. Close just
       // after the chef cat lands its third jump: 0.6s rise-in delay + ~3 jump

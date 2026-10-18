@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
+import { removeRecipeFromSession } from "@/lib/recipe-session";
 
 interface DeleteButtonProps {
   recipeId: string;
@@ -25,6 +26,7 @@ export default function DeleteButton({ recipeId, recipeTitle }: DeleteButtonProp
       });
 
       if (res.ok) {
+        removeRecipeFromSession(recipeId);
         router.push("/recipes");
         router.refresh();
       } else {

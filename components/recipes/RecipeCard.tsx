@@ -14,6 +14,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
   return (
     <Link
       href={`/recipes/${recipe.id}`}
+      id={`recipe-card-${recipe.id}`}
       className="group border border-gray-200 dark:border-zinc-800 rounded-xl overflow-hidden hover:shadow-lg transition-all bg-white dark:bg-zinc-900 flex flex-col h-full shadow-sm"
     >
       <div className="relative aspect-[4/3] w-full bg-gray-50 dark:bg-zinc-800/50 overflow-hidden">

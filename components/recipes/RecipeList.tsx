@@ -4,28 +4,317 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { RecipeWithLastCooked, SortOption, getRecipes } from "@/lib/actions/recipes";
 import RecipeCard from "./RecipeCard";
 import { getTagStyles, cn } from "@/lib/utils";
+import {
+  saveRecipeListState,
+  loadRecipeListState,
+  clearRecipeListState,
+  buildRecipeQueryString,
+  parseRecipeSearchParams,
+  RESET_RECIPES_EVENT,
+} from "@/lib/recipe-session";
 import { Loader2, Search, X, Users } from "lucide-react";
 
 interface RecipeListProps {
   initialRecipes: RecipeWithLastCooked[];
   categories?: string[];
   serverTags?: string[];
+  initialFilters?: {
+    search?: string;
+    tags?: string[];
+    sortBy?: SortOption;
+    onlyOurs?: boolean;
+  };
 }
 
 const ITEMS_PER_PAGE = 15;
 
-export default function RecipeList({ initialRecipes, categories = [], serverTags = [] }: RecipeListProps) {
+export default function RecipeList({
+  initialRecipes,
+  categories = [],
+  serverTags = [],
+  initialFilters,
+}: RecipeListProps) {
+  const initSearch = initialFilters?.search ?? "";
+  const initTags = useMemo(() => initialFilters?.tags ?? [], [initialFilters?.tags]);
+  const initSortBy = initialFilters?.sortBy ?? "recently_added";
+  const initOnlyOurs = initialFilters?.onlyOurs ?? false;
+
   const [recipes, setRecipes] = useState<RecipeWithLastCooked[]>(initialRecipes);
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<SortOption>("recently_added");
-  const [onlyOurs, setOnlyOurs] = useState(false);
+  const [search, setSearch] = useState(initSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initSearch);
+  const [selectedTags, setSelectedTags] = useState<string[]>(initTags);
+  const [sortBy, setSortBy] = useState<SortOption>(initSortBy);
+  const [onlyOurs, setOnlyOurs] = useState(initOnlyOurs);
   const [loading, setLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [hasMore, setHasMore] = useState(initialRecipes.length === ITEMS_PER_PAGE);
   const [offset, setOffset] = useState(initialRecipes.length);
+  const [isRestoring, setIsRestoring] = useState(false);
+
   const isFirstRender = useRef(true);
+  const isRestoringRef = useRef(false);
+  const scrollYRef = useRef(0);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  // Store last applied filters to prevent unwanted refetches during session restoration
+  const prevFiltersRef = useRef({
+    search: initSearch,
+    tags: initTags,
+    sortBy: initSortBy,
+    onlyOurs: initOnlyOurs,
+  });
+
+  // Store restore target until rendered recipes are committed to the DOM
+  const pendingRestoreRef = useRef<{
+    targetY: number;
+    targetRecipeId?: string | null;
+    targetRecipeTop?: number | null;
+    count: number;
+  } | null>(null);
+
+  // Keep refs in sync with latest state
+  const recipesRef = useRef(recipes);
+  const searchRef = useRef(search);
+  const debouncedSearchRef = useRef(debouncedSearch);
+  const selectedTagsRef = useRef(selectedTags);
+  const sortByRef = useRef(sortBy);
+  const onlyOursRef = useRef(onlyOurs);
+  const offsetRef = useRef(offset);
+  const hasMoreRef = useRef(hasMore);
+
+  useEffect(() => {
+    recipesRef.current = recipes;
+    searchRef.current = search;
+    debouncedSearchRef.current = debouncedSearch;
+    selectedTagsRef.current = selectedTags;
+    sortByRef.current = sortBy;
+    onlyOursRef.current = onlyOurs;
+    offsetRef.current = offset;
+    hasMoreRef.current = hasMore;
+  });
+
+  // Track window scroll position and configure manual scroll restoration for Firefox / Chrome
+  useEffect(() => {
+    if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+
+    const handleScroll = () => {
+      if (window.scrollY > 0) {
+        scrollYRef.current = window.scrollY;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Save state when interacting with a recipe card
+  const handleCardInteraction = useCallback((e: React.MouseEvent | React.PointerEvent) => {
+    if (typeof window === "undefined") return;
+    const target = e.target as HTMLElement | null;
+    const cardEl = target?.closest<HTMLAnchorElement>('a[id^="recipe-card-"]');
+
+    let targetRecipeId: string | null = null;
+    let targetRecipeTop: number | null = null;
+
+    if (cardEl) {
+      targetRecipeId = cardEl.id.replace("recipe-card-", "");
+      targetRecipeTop = Math.round(cardEl.getBoundingClientRect().top);
+    }
+
+    const currentScrollY = scrollYRef.current > 0 ? scrollYRef.current : window.scrollY;
+
+    saveRecipeListState({
+      recipes: recipesRef.current,
+      search: searchRef.current,
+      selectedTags: selectedTagsRef.current,
+      sortBy: sortByRef.current,
+      onlyOurs: onlyOursRef.current,
+      offset: offsetRef.current,
+      hasMore: hasMoreRef.current,
+      scrollY: currentScrollY,
+      targetRecipeId,
+      targetRecipeTop,
+    });
+  }, []);
+
+  // Restore state from sessionStorage on initial client mount if returning to the same list view
+  useEffect(() => {
+    queueMicrotask(() => {
+      const currentUrlSearch = typeof window !== "undefined" ? window.location.search : "";
+      const urlFilters = parseRecipeSearchParams(currentUrlSearch);
+      const cached = loadRecipeListState();
+
+      if (cached) {
+        const tagsMatch =
+          cached.selectedTags.length === urlFilters.selectedTags.length &&
+          cached.selectedTags.every((t) => urlFilters.selectedTags.includes(t));
+
+        const filtersMatch =
+          cached.search === urlFilters.search &&
+          tagsMatch &&
+          cached.sortBy === urlFilters.sortBy &&
+          cached.onlyOurs === urlFilters.onlyOurs;
+
+        if (filtersMatch) {
+          isRestoringRef.current = true;
+          setIsRestoring(true);
+
+          prevFiltersRef.current = {
+            search: cached.search,
+            tags: cached.selectedTags,
+            sortBy: cached.sortBy,
+            onlyOurs: cached.onlyOurs,
+          };
+
+          pendingRestoreRef.current = {
+            targetY: cached.scrollY,
+            targetRecipeId: cached.targetRecipeId,
+            targetRecipeTop: cached.targetRecipeTop,
+            count: cached.recipes.length,
+          };
+
+          setRecipes(cached.recipes);
+          setSearch(cached.search);
+          setDebouncedSearch(cached.search);
+          setSelectedTags(cached.selectedTags);
+          setSortBy(cached.sortBy);
+          setOnlyOurs(cached.onlyOurs);
+          setOffset(cached.offset);
+          setHasMore(cached.hasMore);
+          scrollYRef.current = cached.scrollY;
+
+          // Sync URL query string with restored filters
+          const qs = buildRecipeQueryString({
+            search: cached.search,
+            tags: cached.selectedTags,
+            sortBy: cached.sortBy,
+            onlyOurs: cached.onlyOurs,
+          });
+          window.history.replaceState(null, "", `/recipes${qs}`);
+          return;
+        } else {
+          // Discard stale cache if current URL has different filters
+          clearRecipeListState();
+        }
+      }
+
+      // If no valid cache and client URL differs from SSR initial filters, sync state
+      if (urlFilters.hasFilter) {
+        const ssrTags = initTags;
+        const tagsDiffer =
+          urlFilters.selectedTags.length !== ssrTags.length ||
+          urlFilters.selectedTags.some((t) => !ssrTags.includes(t));
+        const filtersDiffer =
+          urlFilters.search !== initSearch ||
+          tagsDiffer ||
+          urlFilters.sortBy !== initSortBy ||
+          urlFilters.onlyOurs !== initOnlyOurs;
+
+        if (filtersDiffer) {
+          setSearch(urlFilters.search);
+          setDebouncedSearch(urlFilters.search);
+          setSelectedTags(urlFilters.selectedTags);
+          setSortBy(urlFilters.sortBy);
+          setOnlyOurs(urlFilters.onlyOurs);
+        }
+      }
+    });
+  }, [initSearch, initTags, initSortBy, initOnlyOurs]);
+
+  // Execute scroll restoration once restored recipes are committed to the DOM
+  useEffect(() => {
+    if (!pendingRestoreRef.current) return;
+    const { targetY, targetRecipeId, targetRecipeTop, count } = pendingRestoreRef.current;
+
+    // Wait until recipes in state reach the expected count
+    if (recipes.length < count) return;
+
+    pendingRestoreRef.current = null;
+
+    let frame = 0;
+    const maxFrames = 6;
+
+    const performScroll = () => {
+      let applied = false;
+
+      // 1. Position clicked card at exact viewport offset
+      if (targetRecipeId) {
+        const cardEl = document.getElementById(`recipe-card-${targetRecipeId}`);
+        if (cardEl) {
+          const cardTopInDoc = cardEl.getBoundingClientRect().top + window.scrollY;
+          const desiredTop = targetRecipeTop ?? 100;
+          const calculatedY = Math.max(0, cardTopInDoc - desiredTop);
+          window.scrollTo({ top: calculatedY, behavior: "instant" });
+          document.documentElement.scrollTop = calculatedY;
+          applied = true;
+        }
+      }
+
+      // 2. Fallback to pixel scroll target
+      if (!applied && targetY > 0) {
+        window.scrollTo({ top: targetY, behavior: "instant" });
+        document.documentElement.scrollTop = targetY;
+      }
+
+      frame++;
+      if (frame < maxFrames) {
+        requestAnimationFrame(performScroll);
+      } else {
+        isRestoringRef.current = false;
+        setIsRestoring(false);
+      }
+    };
+
+    requestAnimationFrame(performScroll);
+  }, [recipes]);
+
+  // Listen for reset events from header logo or nav
+  useEffect(() => {
+    const handleReset = async () => {
+      isRestoringRef.current = false;
+      setIsRestoring(false);
+      pendingRestoreRef.current = null;
+      clearRecipeListState();
+      scrollYRef.current = 0;
+      setSearch("");
+      setDebouncedSearch("");
+      setSelectedTags([]);
+      setSortBy("recently_added");
+      setOnlyOurs(false);
+      window.history.replaceState(null, "", "/recipes");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      setIsInitialLoading(true);
+      try {
+        const defaultRecipes = await getRecipes({
+          limit: ITEMS_PER_PAGE,
+          offset: 0,
+          search: "",
+          tags: [],
+          sortBy: "recently_added",
+          includeOtherFamilies: true,
+        });
+        prevFiltersRef.current = {
+          search: "",
+          tags: [],
+          sortBy: "recently_added",
+          onlyOurs: false,
+        };
+        setRecipes(defaultRecipes);
+        setOffset(defaultRecipes.length);
+        setHasMore(defaultRecipes.length === ITEMS_PER_PAGE);
+      } catch (err) {
+        console.error("Failed to reset recipe list:", err);
+      } finally {
+        setIsInitialLoading(false);
+      }
+    };
+
+    window.addEventListener(RESET_RECIPES_EVENT, handleReset);
+    return () => window.removeEventListener(RESET_RECIPES_EVENT, handleReset);
+  }, []);
 
   // Debounce search input
   useEffect(() => {
@@ -35,12 +324,49 @@ export default function RecipeList({ initialRecipes, categories = [], serverTags
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Handle filter/sort changes
+  // Sync URL query string when active filters change
+  useEffect(() => {
+    if (isFirstRender.current || isRestoringRef.current) return;
+    const qs = buildRecipeQueryString({
+      search: debouncedSearch,
+      tags: selectedTags,
+      sortBy,
+      onlyOurs,
+    });
+    const targetUrl = `/recipes${qs}`;
+    if (typeof window !== "undefined" && window.location.pathname + window.location.search !== targetUrl) {
+      window.history.replaceState(null, "", targetUrl);
+    }
+  }, [debouncedSearch, selectedTags, sortBy, onlyOurs]);
+
+  // Handle user-initiated filter/sort changes
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
+    if (isRestoringRef.current) {
+      return;
+    }
+
+    const prev = prevFiltersRef.current;
+    const tagsChanged =
+      prev.tags.length !== selectedTags.length ||
+      prev.tags.some((t, i) => t !== selectedTags[i]);
+    const hasChanged =
+      prev.search !== debouncedSearch ||
+      tagsChanged ||
+      prev.sortBy !== sortBy ||
+      prev.onlyOurs !== onlyOurs;
+
+    if (!hasChanged) return;
+
+    prevFiltersRef.current = {
+      search: debouncedSearch,
+      tags: selectedTags,
+      sortBy,
+      onlyOurs,
+    };
 
     const refreshRecipes = async () => {
       setIsInitialLoading(true);
@@ -56,50 +382,72 @@ export default function RecipeList({ initialRecipes, categories = [], serverTags
       setOffset(newRecipes.length);
       setHasMore(newRecipes.length === ITEMS_PER_PAGE);
       setIsInitialLoading(false);
+      scrollYRef.current = 0;
+
+      // Save to session cache with scrollY: 0 since filters changed
+      saveRecipeListState({
+        recipes: newRecipes,
+        search: debouncedSearch,
+        selectedTags,
+        sortBy,
+        onlyOurs,
+        offset: newRecipes.length,
+        hasMore: newRecipes.length === ITEMS_PER_PAGE,
+        scrollY: 0,
+      });
     };
 
     refreshRecipes();
   }, [debouncedSearch, selectedTags, sortBy, onlyOurs]);
 
   const loadMore = useCallback(async () => {
-    if (loading || !hasMore) return;
-    
-    setLoading(true);
-    const nextRecipes = await getRecipes({
-      limit: ITEMS_PER_PAGE,
-      offset,
-      search: debouncedSearch,
-      tags: selectedTags,
-      sortBy,
-      includeOtherFamilies: !onlyOurs,
-    });
-    
-    setRecipes((prev) => [...prev, ...nextRecipes]);
-    setOffset((prev) => prev + nextRecipes.length);
-    setHasMore(nextRecipes.length === ITEMS_PER_PAGE);
-    setLoading(false);
-  }, [loading, hasMore, offset, debouncedSearch, selectedTags, sortBy, onlyOurs]);
+    if (loading || !hasMore || isRestoringRef.current) return;
 
-  // Intersection Observer for Infinite Scroll
-  const observer = useRef<IntersectionObserver | null>(null);
-  const lastRecipeElementRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (loading || isInitialLoading) return;
-      if (observer.current) observer.current.disconnect();
-      
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
+    setLoading(true);
+    try {
+      const nextRecipes = await getRecipes({
+        limit: ITEMS_PER_PAGE,
+        offset: offsetRef.current,
+        search: debouncedSearchRef.current,
+        tags: selectedTagsRef.current,
+        sortBy: sortByRef.current,
+        includeOtherFamilies: !onlyOursRef.current,
+      });
+
+      setRecipes((prev) => {
+        const existingIds = new Set(prev.map((r) => r.id));
+        const uniqueNext = nextRecipes.filter((r) => !existingIds.has(r.id));
+        return [...prev, ...uniqueNext];
+      });
+      setOffset((prev) => prev + nextRecipes.length);
+      setHasMore(nextRecipes.length === ITEMS_PER_PAGE);
+    } catch (err) {
+      console.error("Failed to load more recipes:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [loading, hasMore]);
+
+  // Sentinel Intersection Observer for Infinite Scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasMore || loading || isInitialLoading || isRestoring) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
           loadMore();
         }
-      });
-      
-      if (node) observer.current.observe(node);
-    },
-    [loading, isInitialLoading, hasMore, loadMore]
-  );
+      },
+      { rootMargin: "400px" }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loading, isInitialLoading, isRestoring, loadMore]);
 
   const allTags = useMemo(() => {
-    const otherTags = serverTags.filter(t => !categories.includes(t));
+    const otherTags = serverTags.filter((t) => !categories.includes(t));
     return [...categories, ...otherTags];
   }, [serverTags, categories]);
 
@@ -110,9 +458,13 @@ export default function RecipeList({ initialRecipes, categories = [], serverTags
   };
 
   const clearFilters = () => {
+    scrollYRef.current = 0;
     setSearch("");
+    setDebouncedSearch("");
     setSelectedTags([]);
     setOnlyOurs(false);
+    clearRecipeListState();
+    window.history.replaceState(null, "", "/recipes");
   };
 
   return (
@@ -206,7 +558,11 @@ export default function RecipeList({ initialRecipes, categories = [], serverTags
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            onClickCapture={handleCardInteraction}
+            onPointerDownCapture={handleCardInteraction}
+          >
             {recipes.length === 0 ? (
               <div className="col-span-full text-center py-24 bg-gray-50/50 dark:bg-zinc-900/30 rounded-3xl border border-dashed border-gray-200 dark:border-zinc-800">
                 <p className="text-gray-500 dark:text-gray-400 text-lg">
@@ -220,19 +576,14 @@ export default function RecipeList({ initialRecipes, categories = [], serverTags
                 </button>
               </div>
             ) : (
-              recipes.map((recipe, index) => {
-                if (recipes.length === index + 1) {
-                  return (
-                    <div ref={lastRecipeElementRef} key={recipe.id}>
-                      <RecipeCard recipe={recipe} />
-                    </div>
-                  );
-                } else {
-                  return <RecipeCard key={recipe.id} recipe={recipe} />;
-                }
-              })
+              recipes.map((recipe) => (
+                <RecipeCard key={recipe.id} recipe={recipe} />
+              ))
             )}
           </div>
+
+          {/* Sentinel element for infinite scroll */}
+          {hasMore && <div ref={sentinelRef} className="h-4 w-full pointer-events-none" />}
 
           {hasMore && (
             <div className="flex justify-center mt-12 mb-8">

@@ -10,11 +10,12 @@ import IngredientList from "@/components/recipes/IngredientList";
 import DirectionSteps from "@/components/recipes/DirectionSteps";
 import DeleteButton from "@/components/recipes/DeleteButton";
 import CopyMarkdownButton from "@/components/recipes/CopyMarkdownButton";
+import BackButton from "@/components/recipes/BackButton";
 import { recipeToMarkdown } from "@/lib/markdown/recipe";
 import { getTagStyles, cn } from "@/lib/utils";
 import { formatTimeAgo, formatFullDate } from "@/lib/dates";
 import ReactMarkdown from "react-markdown";
-import { Pencil, StickyNote, ArrowLeft, ExternalLink } from "lucide-react";
+import { Pencil, StickyNote, ExternalLink } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -65,12 +66,7 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <Link
-        href="/recipes"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors mb-6"
-      >
-        <ArrowLeft className="w-4 h-4" /> Back to recipes
-      </Link>
+      <BackButton />
 
       <div className="flex flex-col md:flex-row gap-6 mb-8">
         {/* Left column: Photo (or placeholder) */}
