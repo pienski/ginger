@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { RecipeWithLastCooked, SortOption, getRecipes } from "@/lib/actions/recipes";
 import RecipeCard from "./RecipeCard";
 import { getTagStyles, cn } from "@/lib/utils";
-import { Loader2, Search, X } from "lucide-react";
+import { Loader2, Search, X, Users } from "lucide-react";
 
 interface RecipeListProps {
   initialRecipes: RecipeWithLastCooked[];
@@ -20,6 +20,7 @@ export default function RecipeList({ initialRecipes, categories = [], serverTags
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>("recently_added");
+  const [onlyOurs, setOnlyOurs] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [hasMore, setHasMore] = useState(initialRecipes.length === ITEMS_PER_PAGE);
@@ -49,6 +50,7 @@ export default function RecipeList({ initialRecipes, categories = [], serverTags
         search: debouncedSearch,
         tags: selectedTags,
         sortBy,
+        includeOtherFamilies: !onlyOurs,
       });
       setRecipes(newRecipes);
       setOffset(newRecipes.length);
@@ -57,7 +59,7 @@ export default function RecipeList({ initialRecipes, categories = [], serverTags
     };
 
     refreshRecipes();
-  }, [debouncedSearch, selectedTags, sortBy]);
+  }, [debouncedSearch, selectedTags, sortBy, onlyOurs]);
 
   const loadMore = useCallback(async () => {
     if (loading || !hasMore) return;
@@ -69,13 +71,14 @@ export default function RecipeList({ initialRecipes, categories = [], serverTags
       search: debouncedSearch,
       tags: selectedTags,
       sortBy,
+      includeOtherFamilies: !onlyOurs,
     });
     
     setRecipes((prev) => [...prev, ...nextRecipes]);
     setOffset((prev) => prev + nextRecipes.length);
     setHasMore(nextRecipes.length === ITEMS_PER_PAGE);
     setLoading(false);
-  }, [loading, hasMore, offset, debouncedSearch, selectedTags, sortBy]);
+  }, [loading, hasMore, offset, debouncedSearch, selectedTags, sortBy, onlyOurs]);
 
   // Intersection Observer for Infinite Scroll
   const observer = useRef<IntersectionObserver | null>(null);
@@ -109,6 +112,7 @@ export default function RecipeList({ initialRecipes, categories = [], serverTags
   const clearFilters = () => {
     setSearch("");
     setSelectedTags([]);
+    setOnlyOurs(false);
   };
 
   return (
@@ -132,9 +136,28 @@ export default function RecipeList({ initialRecipes, categories = [], serverTags
             </button>
           )}
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
+          <label
+            className={cn(
+              "flex items-center gap-2 px-3.5 py-2.5 border rounded-xl text-sm font-medium transition-all shadow-sm cursor-pointer select-none whitespace-nowrap",
+              onlyOurs
+                ? "bg-blue-50/70 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                : "bg-white dark:bg-zinc-900 text-gray-600 dark:text-gray-400 border-gray-100 dark:border-zinc-800 hover:text-gray-900 dark:hover:text-gray-200"
+            )}
+            title={onlyOurs ? "Showing only your family's recipes (click to show all)" : "Show only your family's recipes"}
+          >
+            <input
+              type="checkbox"
+              checked={onlyOurs}
+              onChange={(e) => setOnlyOurs(e.target.checked)}
+              className="w-4 h-4 rounded border-gray-300 dark:border-zinc-700 text-blue-600 focus:ring-blue-500 bg-gray-50 dark:bg-zinc-800 cursor-pointer"
+            />
+            <Users className="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" />
+            <span>Only ours</span>
+          </label>
+
           <select
-            className="px-4 py-2.5 border border-gray-100 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm cursor-pointer min-w-[160px]"
+            className="px-4 py-2.5 border border-gray-100 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm cursor-pointer min-w-[160px] flex-1 sm:flex-initial"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
           >
@@ -165,7 +188,7 @@ export default function RecipeList({ initialRecipes, categories = [], serverTags
               </button>
             );
           })}
-          {(selectedTags.length > 0 || search) && (
+          {(selectedTags.length > 0 || search || onlyOurs) && (
             <button
               onClick={clearFilters}
               className="px-3 py-1.5 rounded-full text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"

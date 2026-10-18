@@ -90,6 +90,7 @@ export default function RecipePickerModal({
           search: debounced,
           tags: showAll ? [] : [category],
           limit: 20,
+          includeOtherFamilies: true,
         });
         result = recipes.map((r) => ({
           id: r.id,

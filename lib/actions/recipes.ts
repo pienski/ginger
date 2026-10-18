@@ -15,6 +15,7 @@ export interface GetRecipesParams {
   search?: string;
   tags?: string[];
   sortBy?: SortOption;
+  includeOtherFamilies?: boolean;
 }
 
 import { getServerSession } from "next-auth";
@@ -26,13 +27,16 @@ export async function getRecipes({
   search = "",
   tags = [],
   sortBy = "recently_added",
+  includeOtherFamilies = true,
 }: GetRecipesParams = {}) {
   const session = await getServerSession(authOptions);
   if (!session) throw new Error("Unauthorized");
   
   const familyId = session.user.familyId;
   const whereConditions = [
-    or(eq(recipes.familyId, familyId), eq(recipes.isShared, true))!
+    includeOtherFamilies
+      ? or(eq(recipes.familyId, familyId), eq(recipes.isShared, true))!
+      : eq(recipes.familyId, familyId)
   ];
 
   if (search) {

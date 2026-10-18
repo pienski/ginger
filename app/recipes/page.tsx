@@ -21,7 +21,7 @@ export default async function RecipesPage() {
     : [];
 
   const [initialRecipes, allTags] = await Promise.all([
-    getRecipes({ limit: 15 }),
+    getRecipes({ limit: 15, includeOtherFamilies: true }),
     getAllTags(),
   ]);
 
